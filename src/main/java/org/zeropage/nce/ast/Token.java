@@ -25,6 +25,14 @@ public class Token {
             this.operator = operator;
         }
 
+        public boolean isMulDivOperator() {
+            return "*".equals(operator) || "/".equals(operator);
+        }
+
+        public boolean isAddSubOperator() {
+            return "+".equals(operator) || "-".equals(operator);
+        }
+
         @Override
         public String toString() {
             return "Operator: " + operator;
