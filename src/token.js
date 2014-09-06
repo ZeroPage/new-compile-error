@@ -17,21 +17,40 @@
     return new Token(buffer);
   };
 
+  Token.
+
   Token.SYMBOL = function SYMBOL(buffer) {
     var obj;
     obj = {
-      ';': Token.SEMICOLON,
-      ',': Token.COMMA,
-      '+': Token.OPERATOR('+'),
-      '-': Token.OPERATOR('-'),
-      '*': Token.OPERATOR('*'),
-      '/': Token.OPERATOR('/'),
-      '==': Token.OPERATOR('=='),
-      '!=': Token.OPERATOR('!='),
-      '>': Token.OPERATOR('>'),
-      '<': Token.OPERATOR('<'),
-      '>=': Token.OPERATOR('>='),
-      '<=': Token.OPERATOR('<=')
+      ';': {__TOKEN__: Token.SEMICOLON},
+      ',': {__TOKEN__: Token.COMMA},
+      '+': {__TOKEN__: Token.OPERATOR('+')},
+      '-': {__TOKEN__: Token.OPERATOR('-')},
+      '*': {__TOKEN__: Token.OPERATOR('*')},
+      '/': {__TOKEN__: Token.OPERATOR('/')},
+      '!': {
+        '=': {
+          __TOKEN__: Token.OPERATOR('!=')
+        }
+      },
+      '>': {
+        __TOKEN__: Token.OPERATOR('>'),
+        '=': {
+          __TOKEN__: Token.OPERATOR('>=')
+        }
+      },
+      '<': {
+        __TOKEN__: Token.OPERATOR('<'),
+        '=': {
+          __TOKEN__: Token.OPERATOR('<=')
+        }
+      },
+      '=': {
+        __TOKEN__: Token.OPERATOR('='),
+        '=': {
+          __TOKEN__: Token.OPERATOR('==')
+        }
+      }
     };
   };
 })();
