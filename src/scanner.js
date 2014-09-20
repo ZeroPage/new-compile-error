@@ -57,7 +57,6 @@
     var char = this.buffer.shift();
     this.consumed.push(char);
     this.char = this.buffer[0];
-    alert(char);
     return char;
   };
 
