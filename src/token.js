@@ -7,8 +7,14 @@
     this.value = token;
   };
 
-  Token.TYPE_INT = new Token('int');
-  Token.TYPE_FLOAT = new Token('float');
+  Token.Type = function Type(token) {
+    Token.apply(this, arguments);
+  };
+
+  Token.Type.prototype = new Token();
+
+  Token.Type.INT = new Token.Type('int');
+  Token.Type.FLOAT = new Token.Type('float');
 
   Token.SEMICOLON = new Token(';');
   Token.COMMA = new Token(',');
@@ -20,9 +26,11 @@
   Token.LBRACKET = new Token('[');
   Token.RBRACKET = new Token(']');
 
-  Token.IDENTIFIER = function IDENTIFER(buffer) {
-    return new Token(buffer);
+  Token.Identfiier = function Identifier(buffer) {
+    Token.apply(this, arguments);
   };
+
+  Token.Identfiier.prototype = new Token();
 
   Token.OPERATOR = function OPERATOR(buffer) {
     return new Token(buffer);
@@ -33,52 +41,52 @@
   };
 
   SYMBOL_DICTIONARY = {
-    ';': {__TOKEN__: Token.SEMICOLON},
-    ',': {__TOKEN__: Token.COMMA},
-    '+': {__TOKEN__: Token.OPERATOR('+')},
-    '-': {__TOKEN__: Token.OPERATOR('-')},
-    '*': {__TOKEN__: Token.OPERATOR('*')},
-    '/': {__TOKEN__: Token.OPERATOR('/')},
+    ';': {__TOKEN__: new Token.SEMICOLON()},
+    ',': {__TOKEN__: new Token.COMMA()},
+    '+': {__TOKEN__: new Token.OPERATOR('+')},
+    '-': {__TOKEN__: new Token.OPERATOR('-')},
+    '*': {__TOKEN__: new Token.OPERATOR('*')},
+    '/': {__TOKEN__: new Token.OPERATOR('/')},
     '!': {
       '=': {
-        __TOKEN__: Token.OPERATOR('!=')
+        __TOKEN__: new Token.OPERATOR('!=')
       }
     },
     '>': {
-      __TOKEN__: Token.OPERATOR('>'),
+      __TOKEN__: new Token.OPERATOR('>'),
       '=': {
-        __TOKEN__: Token.OPERATOR('>=')
+        __TOKEN__: new Token.OPERATOR('>=')
       }
     },
     '<': {
-      __TOKEN__: Token.OPERATOR('<'),
+      __TOKEN__: new Token.OPERATOR('<'),
       '=': {
-        __TOKEN__: Token.OPERATOR('<=')
+        __TOKEN__: new Token.OPERATOR('<=')
       }
     },
     '=': {
-      __TOKEN__: Token.OPERATOR('='),
+      __TOKEN__: new Token.OPERATOR('='),
       '=': {
-        __TOKEN__: Token.OPERATOR('==')
+        __TOKEN__: new Token.OPERATOR('==')
       }
     },
     '(': {
-      __TOKEN__: Token.LPAREN
+      __TOKEN__: new Token.LPAREN()
     },
     ')': {
-      __TOKEN__: Token.RPAREN
+      __TOKEN__: new Token.RPAREN()
     },
     '{': {
-      __TOKEN__: Token.LBRACE
+      __TOKEN__: new Token.LBRACE()
     },
     '}': {
-      __TOKEN__: Token.RBRACE
+      __TOKEN__: new Token.RBRACE()
     },
     '[': {
-      __TOKEN__: Token.LBRACKET
+      __TOKEN__: new Token.LBRACKET()
     },
     ']': {
-      __TOKEN__: Token.RBRACKET
+      __TOKEN__: new Token.RBRACKET()
     }
   };
 

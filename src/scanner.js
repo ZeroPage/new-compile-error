@@ -117,13 +117,13 @@
 
         switch (buffer) {
           case 'int':
-            token = Token.TYPE_INT;
+            token = Token.Type.INT;
             break;
           case 'float':
-            token = Token.TYPE_FLOAT;
+            token = Token.Type.FLOAT;
             break;
           default:
-            token = Token.IDENTIFIER(buffer);
+            token = new Token.Identfiier(buffer);
         }
       // NUMBER_INT
       } else if (charScanner.isDigit()) {
