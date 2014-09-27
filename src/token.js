@@ -25,6 +25,7 @@
   Token.RBRACE = new Token('}');
   Token.LBRACKET = new Token('[');
   Token.RBRACKET = new Token(']');
+  Token.ASSIGN = new Token('=');
 
   Token.Identfiier = function Identifier(buffer) {
     Token.apply(this, arguments);
