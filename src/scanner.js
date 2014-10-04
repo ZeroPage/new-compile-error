@@ -133,7 +133,7 @@
           buffer += charScanner.readChar();
         }
 
-        token = Token.NUMBER_INT(buffer);
+        token = new Token.Number.Integer(buffer);
       } else if (charScanner.isWhitespace()) {
         charScanner.readChar();
         while (charScanner.nextChar() && charScanner.isWhitespace()) {

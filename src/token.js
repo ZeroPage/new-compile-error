@@ -7,6 +7,19 @@
     this.value = token;
   };
 
+  Token.prototype.is = function(tokenType) {
+    return this === tokenType || this instanceof tokenType
+      || this.tokenTypeIs(tokenType);
+  };
+
+  Token.prototype.tokenTypeIs = function(tokenType) {
+    return this.getTokenType() === tokenType;
+  };
+
+  Token.prototype.getTokenType = function() {
+    return this.tokenType;
+  };
+
   Token.Type = function Type(token) {
     Token.apply(this, arguments);
   };
@@ -33,62 +46,76 @@
 
   Token.Identfiier.prototype = new Token();
 
-  Token.OPERATOR = function OPERATOR(buffer) {
-    return new Token(buffer);
+  Token.Operator = function Operator(buffer, tokenType) {
+    Token.apply(this, arguments);
+
+    this.tokenType = tokenType;
   };
 
-  Token.NUMBER_INT = function NUMBER_INT(buffer) {
-    return new Token(Number(buffer));
+  Token.Operator.prototype = new Token();
+
+  Token.Operator.AddSub = {};
+  Token.Operator.MulDiv = {};
+
+  Token.Operator.prototype.getTokenType = function() {
+    return (this.value === '+' || this.value === '-') && Token.Operator.AddSub
+      || (this.value === '*' || this.value === '/') && Token.Operator.MulDiv;
   };
+
+  Token.Operator.Compare = function CompareOperator(buffer) {
+    Token.Operator.apply(this, arguments);
+  };
+
+  Token.Operator.Compare.prototype = new Token.Operator();
+
+  Token.Number = function NumberToken(buffer) {
+    Token.apply(this, [Number(buffer) || undefined]);
+  };
+
+  Token.Number.prototype = new Token();
+
+  Token.Number.Integer = function IntegerToken(buffer) {
+    Token.Number.apply(this, arguments);
+  };
+
+  Token.Number.Integer.prototype = new Token.Number();
 
   SYMBOL_DICTIONARY = {
-    ';': {__TOKEN__: new Token.SEMICOLON()},
-    ',': {__TOKEN__: new Token.COMMA()},
-    '+': {__TOKEN__: new Token.OPERATOR('+')},
-    '-': {__TOKEN__: new Token.OPERATOR('-')},
-    '*': {__TOKEN__: new Token.OPERATOR('*')},
-    '/': {__TOKEN__: new Token.OPERATOR('/')},
+    ';': {__TOKEN__: Token.SEMICOLON},
+    ',': {__TOKEN__: Token.COMMA},
+    '+': {__TOKEN__: new Token.Operator('+')},
+    '-': {__TOKEN__: new Token.Operator('-')},
+    '*': {__TOKEN__: new Token.Operator('*')},
+    '/': {__TOKEN__: new Token.Operator('/')},
     '!': {
       '=': {
-        __TOKEN__: new Token.OPERATOR('!=')
+        __TOKEN__: new Token.Operator.Compare('!=')
       }
     },
     '>': {
-      __TOKEN__: new Token.OPERATOR('>'),
+      __TOKEN__: new Token.Operator.Compare('>'),
       '=': {
-        __TOKEN__: new Token.OPERATOR('>=')
+        __TOKEN__: new Token.Operator.Compare('>=')
       }
     },
     '<': {
-      __TOKEN__: new Token.OPERATOR('<'),
+      __TOKEN__: new Token.Operator.Compare('<'),
       '=': {
-        __TOKEN__: new Token.OPERATOR('<=')
+        __TOKEN__: new Token.Operator.Compare('<=')
       }
     },
     '=': {
-      __TOKEN__: new Token.OPERATOR('='),
+      __TOKEN__: Token.ASSIGN,
       '=': {
-        __TOKEN__: new Token.OPERATOR('==')
+        __TOKEN__: new Token.Operator.Compare('==')
       }
     },
-    '(': {
-      __TOKEN__: new Token.LPAREN()
-    },
-    ')': {
-      __TOKEN__: new Token.RPAREN()
-    },
-    '{': {
-      __TOKEN__: new Token.LBRACE()
-    },
-    '}': {
-      __TOKEN__: new Token.RBRACE()
-    },
-    '[': {
-      __TOKEN__: new Token.LBRACKET()
-    },
-    ']': {
-      __TOKEN__: new Token.RBRACKET()
-    }
+    '(': {__TOKEN__: Token.LPAREN},
+    ')': {__TOKEN__: Token.RPAREN},
+    '{': {__TOKEN__: Token.LBRACE},
+    '}': {__TOKEN__: Token.RBRACE},
+    '[': {__TOKEN__: Token.LBRACKET},
+    ']': {__TOKEN__: Token.RBRACKET}
   };
 
   Token.SYMBOL_OBJ = function SYMBOL_OBJ(buffer) {

@@ -30,22 +30,21 @@ CompoundStmt ::= "{" StmtList "}"
 StmtList ::= Stmt StmtList ?
 Expr ::= identifier "=" Expr
        | Rvalue
-Rvalue ::= Mag (Compare Mag)*
+Rvalue ::= Mag ( Compare Rvalue ) ?
 Compare ::= "=="
           | "<"
           | ">"
           | "<="
           | ">="
           | "!="
-Mag ::= Term (Addsub Term)*
-Addsub ::= "+"
+Mag ::= Term ( AddSub Mag ) ?
+AddSub ::= "+"
          | "-"
-Term ::= Factor (Multidiv Factor)*
-Multidiv ::= "*"
+Term ::= Factor ( MulDiv Term ) ?
+MulDiv ::= "*"
            | "/"
 Factor ::= "(" Expr ")"
-         | "-" Factor
-         | "+" Factor
+         | AddSub Factor
          | identifier
          | number
 ```
