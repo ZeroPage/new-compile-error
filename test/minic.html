@@ -5,8 +5,15 @@
   </head>
   <body>
     <script type="text/minic">
-      int main() {
-        return 0;
+      int main(int argc) {
+        int i;
+        if (argc > 0)
+          for (i = argc; i < 10; i = i + 1) {
+            argc = argc - 1;
+          }
+        else {
+          argc = 0;
+        }
       }
     </script>
     <script type="text/javascript" src="../dist/minic.js"></script>

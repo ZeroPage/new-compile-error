@@ -107,24 +107,15 @@
     while (charScanner.nextChar()) {
       buffer = '';
 
-      // IDENTIFIER || TYPE_INT || TYPE_FLOAT
+      // IDENTIFIER || TYPE_INT || TYPE_FLOAT || KEYWORD
       if (charScanner.isIdentifierStartChar()) {
         buffer += charScanner.readChar();
 
         while (charScanner.nextChar() && charScanner.isIdentifierChar()) {
           buffer += charScanner.readChar();
         }
-
-        switch (buffer) {
-          case 'int':
-            token = Token.Type.INT;
-            break;
-          case 'float':
-            token = Token.Type.FLOAT;
-            break;
-          default:
-            token = new Token.Identfiier(buffer);
-        }
+        
+        token = Token.WORD(buffer);
       // NUMBER_INT
       } else if (charScanner.isDigit()) {
         buffer += charScanner.readChar();

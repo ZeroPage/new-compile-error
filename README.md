@@ -21,11 +21,11 @@ Stmt ::= ForStmt
        | CompoundStmt
        | Declaration
        | ";"
-ForStmt ::= for "(" Expr ";" OptExpr ";" OptExpr ")" Stmt
+ForStmt ::= "for" "(" Expr ";" OptExpr ";" OptExpr ")" Stmt
 OptExpr ::= Expr ?
-WhileStmt ::= while "(" Expr ")" Stmt
-IfStmt ::= if "(" Expr ")" Stmt ElsePart
-ElsePart ::= ( else Stmt ) ?
+WhileStmt ::= "while" "(" Expr ")" Stmt
+IfStmt ::= "if" "(" Expr ")" Stmt ElsePart
+ElsePart ::= ( "else" Stmt ) ?
 CompoundStmt ::= "{" StmtList "}"
 StmtList ::= Stmt StmtList ?
 Expr ::= identifier "=" Expr

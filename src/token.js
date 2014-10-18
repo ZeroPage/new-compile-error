@@ -1,15 +1,15 @@
 (function(exports) {
   "use strict";
 
-  var Token, SYMBOL_DICTIONARY;
+  var Token, SYMBOL_DICTIONARY, WORD_DICTIONARY;
 
   Token = function Token(token) {
     this.value = token;
   };
 
   Token.prototype.is = function(tokenType) {
-    return this === tokenType || this instanceof tokenType
-      || this.tokenTypeIs(tokenType);
+    return this === tokenType || typeof tokenType === 'function' && this instanceof tokenType ||
+      this.tokenTypeIs(tokenType);
   };
 
   Token.prototype.tokenTypeIs = function(tokenType) {
@@ -46,6 +46,17 @@
 
   Token.Identfiier.prototype = new Token();
 
+  Token.Keyword = function Keyword(buffer) {
+    Token.apply(this, arguments);
+  };
+
+  Token.Keyword.prototype = new Token();
+
+  Token.Keyword.FOR = new Token.Keyword('for');
+  Token.Keyword.WHILE = new Token.Keyword('while');
+  Token.Keyword.IF = new Token.Keyword('if');
+  Token.Keyword.ELSE = new Token.Keyword('else');
+
   Token.Operator = function Operator(buffer, tokenType) {
     Token.apply(this, arguments);
 
@@ -58,8 +69,8 @@
   Token.Operator.MulDiv = {};
 
   Token.Operator.prototype.getTokenType = function() {
-    return (this.value === '+' || this.value === '-') && Token.Operator.AddSub
-      || (this.value === '*' || this.value === '/') && Token.Operator.MulDiv;
+    return (this.value === '+' || this.value === '-') && Token.Operator.AddSub ||
+      (this.value === '*' || this.value === '/') && Token.Operator.MulDiv;
   };
 
   Token.Operator.Compare = function CompareOperator(buffer) {
@@ -69,7 +80,8 @@
   Token.Operator.Compare.prototype = new Token.Operator();
 
   Token.Number = function NumberToken(buffer) {
-    Token.apply(this, [Number(buffer) || undefined]);
+    var number = Number(buffer);
+    Token.apply(this, [Number.isNaN(number) ? undefined : number]);
   };
 
   Token.Number.prototype = new Token();
@@ -136,6 +148,25 @@
     var obj = Token.SYMBOL_OBJ(buffer);
 
     return obj && obj.__TOKEN__;
+  };
+
+  WORD_DICTIONARY = {
+    'int': Token.Type.INT,
+    'float': Token.Type.FLOAT,
+    'for': Token.Keyword.FOR,
+    'while': Token.Keyword.WHILE,
+    'if': Token.Keyword.IF,
+    'else': Token.Keyword.ELSE
+  };
+
+  Token.WORD = function WORD(buffer) {
+    var token = WORD_DICTIONARY[buffer];
+
+    if (!token) {
+      token = new Token.Identfiier(buffer);
+    }
+
+    return token;
   };
 
   exports.Token = Token;
