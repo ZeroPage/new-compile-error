@@ -9,7 +9,33 @@
 
   };
 
-  AST.Function = function MCFunction(type, id, args, stmts) {
+  AST.Program = function Program(decls) {
+    AST.apply(this, arguments);
+
+    this.decls = decls;
+  };
+
+  AST.Program.prototype = new AST();
+
+  AST.DeclList = function DeclList(decl, decls) {
+    AST.apply(this, arguments);
+
+    this.decl = decl;
+    this.decls = decls;
+  };
+
+  AST.DeclList.prototype = new AST();
+
+  AST.VarDeclList = function VarDeclList(decl, decls) {
+    AST.apply(this, arguments);
+
+    this.decl = decl;
+    this.decls = decls;
+  };
+
+  AST.VarDeclList.prototype = new AST();
+
+  AST.FunctionDecl = function FunctionDecl(type, id, args, stmts) {
     AST.apply(this, arguments);
 
     this.type = type;
@@ -18,7 +44,7 @@
     this.stmts = stmts;
   };
 
-  AST.Function.prototype = new AST();
+  AST.FunctionDecl.prototype = new AST();
 
   AST.ArgList = function ArgList(arg, args) {
     AST.apply(this, arguments);
@@ -38,23 +64,24 @@
 
   AST.Arg.prototype = new AST();
 
-  AST.Declaration = function Declaration(type, idList) {
+  AST.VarDecl = function VarDecl(type, idList) {
     AST.apply(this, arguments);
 
     this.type = type;
     this.idList = idList;
   };
 
-  AST.Declaration.prototype = new AST();
+  AST.VarDecl.prototype = new AST();
 
-  AST.IdenList = function IdenList(id, idList) {
+  AST.IdentList = function IdentList(id, expr, idList) {
     AST.apply(this, arguments);
 
     this.id = id;
+    this.expr = expr;
     this.idList = idList;
   };
 
-  AST.IdenList.prototype = new AST();
+  AST.IdentList.prototype = new AST();
 
   AST.Stmt = function Stmt() {
     AST.apply(this, arguments);
@@ -92,13 +119,22 @@
 
   AST.Stmt.IfStmt.prototype = new AST.Stmt();
 
-  AST.Stmt.CompoundStmt = function CompoundStmt(stmts) {
+  AST.Stmt.CompoundStmt = function CompoundStmt(decls, stmts) {
     AST.Stmt.apply(this, arguments);
 
+    this.decls = decls;
     this.stmts = stmts;
   };
 
   AST.Stmt.CompoundStmt.prototype = new AST.Stmt();
+
+  AST.Stmt.ReturnStmt = function ReturnStmt(expr) {
+    AST.Stmt.apply(this, arguments);
+
+    this.expr = expr;
+  };
+
+  AST.Stmt.ReturnStmt.prototype = new AST.Stmt();
 
   AST.Stmt.ExprStmt = function ExprStmt(expr) {
     AST.Stmt.apply(this, arguments);
@@ -190,6 +226,24 @@
   };
 
   AST.Factor.UnaryFactor.prototype = new AST.Factor();
+
+  AST.Factor.FunctionCall = function FunctionCall(id, params) {
+    AST.Factor.apply(this, arguments);
+
+    this.id = id;
+    this.params = params;
+  };
+
+  AST.Factor.FunctionCall.prototype = new AST.Factor();
+
+  AST.ExprList = function ExprList(expr, exprs) {
+    AST.apply(this, arguments);
+
+    this.expr = expr;
+    this.exprs = exprs;
+  };
+
+  AST.ExprList.prototype = new AST();
 
   exports.AST = AST;
 

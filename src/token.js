@@ -40,11 +40,11 @@
   Token.RBRACKET = new Token(']');
   Token.ASSIGN = new Token('=');
 
-  Token.Identfiier = function Identifier(buffer) {
+  Token.Identifier = function Identifier(buffer) {
     Token.apply(this, arguments);
   };
 
-  Token.Identfiier.prototype = new Token();
+  Token.Identifier.prototype = new Token();
 
   Token.Keyword = function Keyword(buffer) {
     Token.apply(this, arguments);
@@ -56,6 +56,7 @@
   Token.Keyword.WHILE = new Token.Keyword('while');
   Token.Keyword.IF = new Token.Keyword('if');
   Token.Keyword.ELSE = new Token.Keyword('else');
+  Token.Keyword.RETURN = new Token.Keyword('return');
 
   Token.Operator = function Operator(buffer, tokenType) {
     Token.apply(this, arguments);
@@ -163,7 +164,7 @@
     var token = WORD_DICTIONARY[buffer];
 
     if (!token) {
-      token = new Token.Identfiier(buffer);
+      token = new Token.Identifier(buffer);
     }
 
     return token;

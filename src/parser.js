@@ -1,16 +1,26 @@
 (function(exports) {
   "use strict";
 
-  var Parser, LLParser, AST, Token;
+  var Parser, LLParser, AST, Token, SyntaxError;
 
   AST = require('./ast').AST;
   Token = require('./token').Token;
+
+  SyntaxError = require('./error').SyntaxError;
 
   Parser = function(tokens) {
     var ast, parser;
 
     parser = new LLParser(tokens);
-    ast = parser.takeFunction();
+    try {
+      ast = parser.takeProgram();
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        console.error(e.message, e.actual, e.expected);
+      } else {
+        console.error(e);
+      }
+    }
 
     return ast;
   };
@@ -23,19 +33,38 @@
     if (!tokenType || this.nextTokenIs(tokenType)) {
       return this.tokens.shift();
     } else {
-      //return null;
-      console.log('Unexpected token: ', this.tokens[0], tokenType);
-
       //TODO: override error type
-      throw new Error('Unexpected token: ', this.tokens[0], tokenType);
+      throw new SyntaxError('Unexpected token: ', this.tokens[0], tokenType);
     }
   };
 
   LLParser.prototype.nextTokenIs = function(tokenType, lookahead) {
-    return this.tokens[lookahead || 0].is(tokenType);
+    lookahead = lookahead || 0;
+    return this.tokens.length > lookahead && this.tokens[lookahead].is(tokenType);
   };
 
-  LLParser.prototype.takeFunction = function() {
+  LLParser.prototype.takeProgram = function() {
+    var decls;
+    if (this.nextTokenIs(Token.Type)) {
+      decls = this.takeDeclList();
+    }
+    return new AST.Program(decls);
+  };
+
+  LLParser.prototype.takeDeclList = function() {
+    var decl, decls;
+    if (this.nextTokenIs(Token.LPAREN, 2)) {
+      decl = this.takeFunctionDecl();
+    } else {
+      decl = this.takeVarDecl();
+    }
+    if (this.nextTokenIs(Token.Type)) {
+      decls = this.takeDeclList();
+    }
+    return new AST.DeclList(decl, decls);
+  };
+
+  LLParser.prototype.takeFunctionDecl = function() {
     var type, id, args, stmts;
     type = this.takeIt(Token.Type);
     id = this.takeIt(Token.Identifier);
@@ -43,7 +72,7 @@
     args = this.takeArgList();
     this.takeIt(Token.RPAREN);
     stmts = this.takeCompoundStmt();
-    return new AST.Function(type, id, args, stmts);
+    return new AST.FunctionDecl(type, id, args, stmts);
   };
 
   LLParser.prototype.takeArgList = function() {
@@ -63,22 +92,26 @@
     return new AST.Arg(type, id);
   };
 
-  LLParser.prototype.takeDeclaration = function() {
+  LLParser.prototype.takeVarDecl = function() {
     var type, idList;
     type = this.takeIt(Token.Type);
-    idList = this.takeIdenList();
+    idList = this.takeIdentList();
     this.takeIt(Token.SEMICOLON);
-    return new AST.Declaration(type, idList);
+    return new AST.VarDecl(type, idList);
   };
 
-  LLParser.prototype.takeIdenList = function() {
-    var id, idList;
+  LLParser.prototype.takeIdentList = function() {
+    var id, expr, idList;
     id = this.takeIt(Token.Identifier);
+    if (this.nextTokenIs(Token.ASSIGN)) {
+      this.takeIt();
+      expr = this.takeExpr();
+    }
     if (this.nextTokenIs(Token.COMMA)) {
       this.takeIt();
-      idList = this.takeIdenList();
+      idList = this.takeIdentList();
     }
-    return new AST.IdenList(id, idList);
+    return new AST.IdentList(id, expr, idList);
   };
 
   LLParser.prototype.takeStmt = function() {
@@ -91,8 +124,12 @@
       return this.takeIfStmt();
     } else if (this.nextTokenIs(Token.LBRACE)) {
       return this.takeCompoundStmt();
-    } else if (this.nextTokenIs(Token.Type)) {
-      return this.takeDeclaration();
+    } else if (this.nextTokenIs(Token.Keyword.RETURN)) {
+      this.takeIt();
+      if (!this.nextTokenIs(Token.SEMICOLON)) {
+        expr = this.takeExpr();
+      }
+      return new AST.Stmt.ReturnStmt(expr);
     } else if (this.nextTokenIs(Token.SEMICOLON)) {
       this.takeIt();
       return new AST.Stmt();
@@ -146,11 +183,16 @@
   };
 
   LLParser.prototype.takeCompoundStmt = function() {
-    var stmts;
+    var decls, stmts;
     this.takeIt(Token.LBRACE);
-    stmts = this.takeStmtList();
+    if (this.nextTokenIs(Token.Type)) {
+      decls = this.takeVarDeclList();
+    }
+    if (!this.nextTokenIs(Token.RBRACE)) {
+      stmts = this.takeStmtList();
+    }
     this.takeIt(Token.RBRACE);
-    return new AST.Stmt.CompoundStmt(stmts);
+    return new AST.Stmt.CompoundStmt(decls, stmts);
   };
 
   LLParser.prototype.takeStmtList = function() {
@@ -161,6 +203,15 @@
       stmts = this.takeStmtList();
     }
     return new AST.StmtList(stmt, stmts);
+  };
+
+  LLParser.prototype.takeVarDeclList = function() {
+    var decl, decls;
+    decl = this.takeVarDecl();
+    if (this.nextTokenIs(Token.Type)) {
+      decls = this.takeVarDeclList();
+    }
+    return new AST.VarDeclList(decl, decls);
   };
 
   LLParser.prototype.takeExpr = function() {
@@ -208,7 +259,7 @@
   }; 
 
   LLParser.prototype.takeFactor = function() {
-    var expr, operator, factor, id, number;
+    var expr, operator, factor, id, params, number;
     if (this.nextTokenIs(Token.LPAREN)) {
       this.takeIt();
       expr = this.takeExpr();
@@ -220,11 +271,31 @@
       return new AST.Factor.UnaryFactor(operator, factor);
     } else if (this.nextTokenIs(Token.Identifier)) {
       id = this.takeIt();
+      if (this.nextTokenIs(Token.LPAREN)) {
+        this.takeIt();
+        if (!this.nextTokenIs(Token.RPAREN)) {
+          params = this.takeExprList();
+        }
+        this.takeIt(Token.RPAREN);
+        return new AST.Factor.FunctionCall(id, params);
+      }
       return new AST.Factor(id);
     } else if (this.nextTokenIs(Token.Number)) {
       number = this.takeIt();
       return new AST.Factor(number);
-    } else throw new Error('Unexpected token: ', this.takeIt());
+    } else {
+      throw new SyntaxError('Unexpected token: ', this.takeIt());
+    }
+  };
+
+  LLParser.prototype.takeExprList = function() {
+    var expr, exprs;
+    expr = this.takeExpr();
+    if (this.nextTokenIs(Token.COMMA)) {
+      this.takeIt();
+      exprs = this.takeExprList();
+    }
+    return new AST.ExprList(expr, exprs);
   };
 
   exports.Parser = Parser;

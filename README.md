@@ -7,26 +7,29 @@ http://wiki.zeropage.org/wiki.php/NewCompileError
 
 ### BNF description for LL(>=1) grammars
 ```
-Function ::= Type identifier "(" ArgList ")" CompoundStmt
+Program ::= DeclList ?
+DeclList ::= ( VarDecl | FunctionDecl ) DeclList ?
+FunctionDecl ::= Type identifier "(" ArgList ")" CompoundStmt
 ArgList ::= Arg ( "," ArgList ) ?
 Arg ::= Type identifier
-Declaration ::= Type IdentList ";"
+VarDecl ::= Type IdentList ";"
 Type ::= "int"
        | "float"
-IdentList ::= identifier ( "," IdentList ) ?
+IdentList ::= identifier ( "=" Expr ) ? ( "," IdentList ) ?
 Stmt ::= ForStmt
        | WhileStmt
        | Expr ";"
        | IfStmt
        | CompoundStmt
-       | Declaration
+       | "return" Expr ? ";"
        | ";"
 ForStmt ::= "for" "(" Expr ";" OptExpr ";" OptExpr ")" Stmt
 OptExpr ::= Expr ?
 WhileStmt ::= "while" "(" Expr ")" Stmt
 IfStmt ::= "if" "(" Expr ")" Stmt ElsePart
 ElsePart ::= ( "else" Stmt ) ?
-CompoundStmt ::= "{" StmtList "}"
+CompoundStmt ::= "{" VarDeclList ? StmtList ? "}"
+VarDeclList ::= VarDecl VarDeclList ?
 StmtList ::= Stmt StmtList ?
 Expr ::= identifier "=" Expr
        | Rvalue
@@ -45,6 +48,8 @@ MulDiv ::= "*"
            | "/"
 Factor ::= "(" Expr ")"
          | AddSub Factor
+         | identifier "(" ExprList ? ")"
          | identifier
          | number
+ExprList ::= Expr ( "," ExprList ) ?
 ```

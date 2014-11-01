@@ -5,11 +5,13 @@
   </head>
   <body>
     <script type="text/minic">
+      int add = 2;
       int main(int argc) {
         int i;
         if (argc > 0)
           for (i = argc; i < 10; i = i + 1) {
-            argc = argc - 1;
+            int a = argc - i;
+            argc = argc - add(1, 2);
           }
         else {
           argc = 0;
