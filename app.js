@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  var tokens, ast;
+  var tokens, ast, semantic;
 
   tokens = require('./src/scanner').Scanner();
 
@@ -10,4 +10,6 @@
   ast = require('./src/parser').Parser(tokens.slice());
 
   console.log("AST: ", ast);
+
+  require('./src/semantic').Analyzer(ast);
 })();
