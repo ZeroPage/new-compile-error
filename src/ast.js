@@ -6,7 +6,14 @@
   };
 
   AST.prototype.consistOf = function() {
+    return this.arguments;
+  };
 
+  AST.prototype.accept = function(visitor) {
+    var i, nodes = this.consistOf();
+    for (i = 0; i < nodes.length; i++) {
+      if (nodes[i]) nodes[i].accept(visitor);
+    }
   };
 
   AST.Program = function Program(decls) {
@@ -46,6 +53,13 @@
 
   AST.FunctionDecl.prototype = new AST();
 
+  AST.FunctionDecl.prototype.accept = function(visitor) {
+    visitor.visitFunctionDecl(this, function(visitor) {
+      if (this.args) this.args.accept(visitor);
+      if (this.stmts) this.stmts.accept(visitor);
+    });
+  };
+
   AST.ArgList = function ArgList(arg, args) {
     AST.apply(this, arguments);
 
@@ -64,11 +78,16 @@
 
   AST.Arg.prototype = new AST();
 
+  AST.Arg.prototype.accept = function(visitor) {
+    visitor.visitArg(this);
+  };
+
   AST.VarDecl = function VarDecl(type, idList) {
     AST.apply(this, arguments);
 
     this.type = type;
     this.idList = idList;
+    this.idList.setType(type);
   };
 
   AST.VarDecl.prototype = new AST();
@@ -82,6 +101,16 @@
   };
 
   AST.IdentList.prototype = new AST();
+
+  AST.IdentList.prototype.setType = function(type) {
+    this.type = type;
+    if (this.idList) this.idList.setType(type);
+  };
+
+  AST.IdentList.prototype.accept = function(visitor) {
+    visitor.visitIdentList(this);
+    if (this.idList) this.idList.accept(visitor);
+  };
 
   AST.Stmt = function Stmt() {
     AST.apply(this, arguments);
