@@ -7,6 +7,9 @@
     this.value = token;
   };
 
+  Token.prototype.accept = function(visitor) {
+  };
+
   Token.prototype.is = function(tokenType) {
     return this === tokenType || typeof tokenType === 'function' && this instanceof tokenType ||
       this.tokenTypeIs(tokenType);
@@ -25,6 +28,11 @@
   };
 
   Token.Type.prototype = new Token();
+
+  Token.Type.prototype.isAssignableFrom = function(type) {
+    return (this.value === type) ||
+      (this.value === 'float' && type.value === 'int');
+  };
 
   Token.Type.INT = new Token.Type('int');
   Token.Type.FLOAT = new Token.Type('float');
@@ -45,6 +53,10 @@
   };
 
   Token.Identifier.prototype = new Token();
+
+  Token.Identifier.prototype.accept = function(visitor) {
+    visitor.visitIdentifier(this);
+  };
 
   Token.Keyword = function Keyword(buffer) {
     Token.apply(this, arguments);

@@ -1,49 +1,52 @@
 (function(exports) {
   "use strict";
 
-  var Context, ScopeStack, StdEnvironment, Visitor;
+  var Context, ScopeStack, StdEnvironment, Visitor, NewSyntaxError, isAssignableFrom;
 
+  NewSyntaxError = require('./error').NewSyntaxError;
+
+  /* jshint ignore:start */
   StdEnvironment = new (function Scope() {
-    this.parent = this;
+    this.$parent = this;
   })();
+  /* jshint ignore:end */
 
   ScopeStack = function ScopeStack() {
     this.current = StdEnvironment;
   };
 
   ScopeStack.prototype.pushScope = function() {
-    function Scope(parent) { this.parent = parent; }
+    function Scope($parent) { this.$parent = $parent; }
     Scope.prototype = this.current;
     this.current = new Scope(this.current);
   };
 
   ScopeStack.prototype.popScope = function() {
-    this.current = this.current.parent;
+    this.current = this.current.$parent;
   };
 
   ScopeStack.prototype.putSymbol = function(symbol, type, node) {
-    if (this.current.hasOwnProperty(symbol)) {
-      throw new SyntaxError("Duplicate declaration in current scope", symbol);
+    if (this.current.hasOwnProperty(symbol.value || symbol)) {
+      throw new NewSyntaxError("Duplicate declaration in current scope", symbol);
     }
-    this.current[symbol] = {
+    this.current[symbol.value || symbol] = {
       type: type,
       node: node
     };
   };
 
   ScopeStack.prototype.getSymbol = function(symbol) {
-    return this.current[symbol];
+    return this.current[symbol.value || symbol];
   };
 
   Visitor = function Visitor(context) {
     this.context = context;
   };
 
-  Visitor.prototype.visitFunctionDecl = function(node, callback) {
+  Visitor.prototype.visitFunctionDecl = function(node) {
     this.context.scopeStack.putSymbol(node.id, node.type, node);
-    this.context.pushScope();
-    callback.call(node, this);
-    this.context.popScope();
+    this.isFunctionDecl = true;
+    this.context.scopeStack.pushScope();
   };
 
   Visitor.prototype.visitArg = function(node) {
@@ -52,6 +55,23 @@
 
   Visitor.prototype.visitIdentList = function(node) {
     this.context.scopeStack.putSymbol(node.id, node.type, node);
+  };
+
+  Visitor.prototype.visitCompoundStmt = function(node, callback) {
+    if (!this.isFunctionDecl) {
+      this.context.scopeStack.pushScope();
+    }
+    this.isFunctionDecl = false;
+
+    if (callback) callback.call(node, this);
+
+    this.context.scopeStack.popScope();
+  };
+
+  Visitor.prototype.visitIdentifier = function(node) {
+    var symbol = this.context.scopeStack.getSymbol(node);
+    node.type = symbol.type;
+    node.decl = symbol.node;
   };
 
   Context = function Context(scopeStack) {
@@ -64,6 +84,14 @@
     // type checking
 
     // traverse AST
-    ast.accept(new Visitor(new Context(new ScopeStack())));
+    try {
+      ast.accept(new Visitor(new Context(new ScopeStack())));
+    } catch (e) {
+      if (e instanceof NewSyntaxError) {
+        console.error(e.message, e.actual);
+      } else {
+        console.error(e);
+      }
+    }
   };
 })((module || {exports: {}}).exports);

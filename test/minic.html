@@ -7,10 +7,11 @@
     <script type="text/minic">
       int add = 2;
       int main(int argc) {
-        int i;
+        int i, a, add;
+        float f;
         if (argc > 0)
           for (i = argc; i < 10; i = i + 1) {
-            int a = argc - i;
+            int a = argc - i, add;
             argc = argc - add(1, 2);
           }
         else {

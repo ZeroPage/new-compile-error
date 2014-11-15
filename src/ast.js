@@ -1,9 +1,11 @@
 (function(exports) {
   "use strict";
 
-  var AST = function AST() {
+  var NewSyntaxError, AST = function AST() {
     this.arguments = arguments;
   };
+
+  NewSyntaxError = require('./error').NewSyntaxError;
 
   AST.prototype.consistOf = function() {
     return this.arguments;
@@ -54,10 +56,9 @@
   AST.FunctionDecl.prototype = new AST();
 
   AST.FunctionDecl.prototype.accept = function(visitor) {
-    visitor.visitFunctionDecl(this, function(visitor) {
-      if (this.args) this.args.accept(visitor);
-      if (this.stmts) this.stmts.accept(visitor);
-    });
+    visitor.visitFunctionDecl(this);
+    if (this.args) this.args.accept(visitor);
+    if (this.stmts) this.stmts.accept(visitor);
   };
 
   AST.ArgList = function ArgList(arg, args) {
@@ -157,6 +158,13 @@
 
   AST.Stmt.CompoundStmt.prototype = new AST.Stmt();
 
+  AST.Stmt.CompoundStmt.prototype.accept = function(visitor) {
+    visitor.visitCompoundStmt(this, function(visitor) {
+      if (this.decls) this.decls.accept(visitor);
+      if (this.stmts) this.stmts.accept(visitor);
+    });
+  };
+
   AST.Stmt.ReturnStmt = function ReturnStmt(expr) {
     AST.Stmt.apply(this, arguments);
 
@@ -192,6 +200,15 @@
     return null;
   };
 
+  AST.Expr.prototype.getType = function() {
+    return null;
+  };
+
+  AST.Expr.prototype.accept = function(visitor) {
+    AST.prototype.accept.call(this, visitor);
+    this.type = this.inferType();
+  };
+
   AST.Expr.AssignExpr = function AssignExpr(id, expr) {
     AST.Expr.apply(this, arguments);
 
@@ -201,6 +218,13 @@
 
   AST.Expr.AssignExpr.prototype = new AST.Expr();
 
+  AST.Expr.AssignExpr.prototype.inferType = function() {
+    if (!this.id.type.isAssignableFrom(this.expr.type))
+      throw new NewSyntaxError('Cannot assign value', this.expr.type, this.id.type);
+
+    return this.id.type;
+  };
+
   AST.Expr.RvalueExpr = function RvalueExpr(rvalue) {
     AST.Expr.apply(this, arguments);
 
@@ -209,61 +233,69 @@
 
   AST.Expr.RvalueExpr.prototype = new AST.Expr();
 
-  AST.Rvalue = function Rvalue(mag, operator, rvalue) {
-    AST.apply(this, arguments);
+  AST.Expr.RvalueExpr.prototype.inferType = function() {
+    return this.rvalue.type;
+  };
+
+  AST.Expr.Rvalue = function Rvalue(mag, operator, rvalue) {
+    AST.Expr.apply(this, arguments);
 
     this.mag = mag;
     this.operator = operator;
     this.rvalue = rvalue;
   };
 
-  AST.Rvalue.prototype = new AST();
+  AST.Expr.Rvalue.prototype = new AST.Expr();
 
-  AST.Mag = function Mag(term, operator, mag) {
-    AST.apply(this, arguments);
+  AST.Expr.Rvalue.prototype.inferType = function() {
+    //TODO: infer <- mag & rvalue
+  };
+
+  AST.Expr.Mag = function Mag(term, operator, mag) {
+    AST.Expr.apply(this, arguments);
 
     this.term = term;
     this.operator = operator;
     this.mag = mag;
   };
 
-  AST.Mag.prototype = new AST();
+  AST.Expr.Mag.prototype = new AST.Expr();
 
-  AST.Term = function Term(factor, operator, term) {
-    AST.apply(this, arguments);
+  AST.Expr.Term = function Term(factor, operator, term) {
+    AST.Expr.apply(this, arguments);
 
     this.factor = factor;
     this.operator = operator;
     this.term = term;
   };
 
-  AST.Term.prototype = new AST();
+  AST.Expr.Term.prototype = new AST.Expr();
 
-  AST.Factor = function Factor(expr) {
-    AST.apply(this, arguments);
+  AST.Expr.Factor = function Factor(expr) {
+    AST.Expr.apply(this, arguments);
 
     this.expr = expr;
   };
 
-  AST.Factor.prototype = new AST();
+  AST.Expr.Factor.prototype = new AST.Expr();
 
-  AST.Factor.UnaryFactor = function UnaryFactor(operator, factor) {
-    AST.Factor.apply(this, arguments);
+  AST.Expr.Factor.UnaryFactor = function UnaryFactor(operator, factor) {
+    AST.Expr.Factor.apply(this, arguments);
 
     this.operator = operator;
     this.factor = factor;
   };
 
-  AST.Factor.UnaryFactor.prototype = new AST.Factor();
+  AST.Expr.Factor.UnaryFactor.prototype = new AST.Expr.Factor();
 
-  AST.Factor.FunctionCall = function FunctionCall(id, params) {
-    AST.Factor.apply(this, arguments);
+  AST.Expr.Factor.FunctionCall = function FunctionCall(id, params) {
+    AST.Expr.Factor.apply(this, arguments);
 
     this.id = id;
     this.params = params;
   };
 
-  AST.Factor.FunctionCall.prototype = new AST.Factor();
+  AST.Expr.Factor.FunctionCall.prototype = new AST.Expr.Factor();
 
   AST.ExprList = function ExprList(expr, exprs) {
     AST.apply(this, arguments);

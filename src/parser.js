@@ -1,12 +1,12 @@
 (function(exports) {
   "use strict";
 
-  var Parser, LLParser, AST, Token, SyntaxError;
+  var Parser, LLParser, AST, Token, NewSyntaxError;
 
   AST = require('./ast').AST;
   Token = require('./token').Token;
 
-  SyntaxError = require('./error').SyntaxError;
+  NewSyntaxError = require('./error').NewSyntaxError;
 
   Parser = function(tokens) {
     var ast, parser;
@@ -15,7 +15,7 @@
     try {
       ast = parser.takeProgram();
     } catch (e) {
-      if (e instanceof SyntaxError) {
+      if (e instanceof NewSyntaxError) {
         console.error(e.message, e.actual, e.expected);
       } else {
         console.error(e);
@@ -34,7 +34,7 @@
       return this.tokens.shift();
     } else {
       //TODO: override error type
-      throw new SyntaxError('Unexpected token: ', this.tokens[0], tokenType);
+      throw new NewSyntaxError('Unexpected token: ', this.tokens[0], tokenType);
     }
   };
 
@@ -235,7 +235,7 @@
       operator = this.takeIt();
       rvalue = this.takeRvalue();
     }
-    return new AST.Rvalue(mag, operator, rvalue);
+    return new AST.Expr.Rvalue(mag, operator, rvalue);
   };
 
   LLParser.prototype.takeMag = function() {
@@ -245,7 +245,7 @@
       operator = this.takeIt();
       mag = this.takeMag();
     }
-    return new AST.Mag(term, operator, mag);
+    return new AST.Expr.Mag(term, operator, mag);
   };
 
   LLParser.prototype.takeTerm = function() {
@@ -255,7 +255,7 @@
       operator = this.takeIt(Token.Operator.MulDiv);
       term = this.takeTerm();
     }
-    return new AST.Term(factor, operator, term);
+    return new AST.Expr.Term(factor, operator, term);
   }; 
 
   LLParser.prototype.takeFactor = function() {
@@ -264,11 +264,11 @@
       this.takeIt();
       expr = this.takeExpr();
       this.takeIt(Token.RPAREN);
-      return new AST.Factor(expr);
+      return new AST.Expr.Factor(expr);
     } else if (this.nextTokenIs(Token.Operator.AddSub)) {
       operator = this.takeIt();
       factor = this.takeFactor();
-      return new AST.Factor.UnaryFactor(operator, factor);
+      return new AST.Expr.Factor.UnaryFactor(operator, factor);
     } else if (this.nextTokenIs(Token.Identifier)) {
       id = this.takeIt();
       if (this.nextTokenIs(Token.LPAREN)) {
@@ -277,14 +277,14 @@
           params = this.takeExprList();
         }
         this.takeIt(Token.RPAREN);
-        return new AST.Factor.FunctionCall(id, params);
+        return new AST.Expr.Factor.FunctionCall(id, params);
       }
-      return new AST.Factor(id);
+      return new AST.Expr.Factor(id);
     } else if (this.nextTokenIs(Token.Number)) {
       number = this.takeIt();
-      return new AST.Factor(number);
+      return new AST.Expr.Factor(number);
     } else {
-      throw new SyntaxError('Unexpected token: ', this.takeIt());
+      throw new NewSyntaxError('Unexpected token: ', this.takeIt());
     }
   };
 
