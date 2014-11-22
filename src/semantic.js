@@ -15,10 +15,11 @@
     this.current = StdEnvironment;
   };
 
-  ScopeStack.prototype.pushScope = function() {
+  ScopeStack.prototype.pushScope = function(node) {
     function Scope($parent) { this.$parent = $parent; }
     Scope.prototype = this.current;
     this.current = new Scope(this.current);
+    this.current.$decl = node;
   };
 
   ScopeStack.prototype.popScope = function() {
@@ -46,7 +47,7 @@
   Visitor.prototype.visitFunctionDecl = function(node) {
     this.context.scopeStack.putSymbol(node.id, node.type, node);
     this.isFunctionDecl = true;
-    this.context.scopeStack.pushScope();
+    this.context.scopeStack.pushScope(node);
   };
 
   Visitor.prototype.visitArg = function(node) {
@@ -72,6 +73,13 @@
     var symbol = this.context.scopeStack.getSymbol(node);
     node.type = symbol.type;
     node.decl = symbol.node;
+  };
+
+  Visitor.prototype.visitReturnStmt = function(node) {
+    // FIXME
+    if (!this.context.scopeStack.$decl.id.type.isAssignableFrom(node.expr.type)) {
+      throw new NewSyntaxError('function return type is not matched', node.expr.type, this.context.scopeStack.$decl.id.type);
+    }
   };
 
   Context = function Context(scopeStack) {

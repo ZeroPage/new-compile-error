@@ -129,6 +129,7 @@
       if (!this.nextTokenIs(Token.SEMICOLON)) {
         expr = this.takeExpr();
       }
+      this.takeIt(Token.SEMICOLON);
       return new AST.Stmt.ReturnStmt(expr);
     } else if (this.nextTokenIs(Token.SEMICOLON)) {
       this.takeIt();

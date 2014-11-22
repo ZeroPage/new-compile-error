@@ -1,9 +1,11 @@
 (function(exports) {
   "use strict";
 
-  var NewSyntaxError, AST = function AST() {
+  var Token, NewSyntaxError, AST = function AST() {
     this.arguments = arguments;
   };
+  
+  Token = require('./token').Token;
 
   NewSyntaxError = require('./error').NewSyntaxError;
 
@@ -70,6 +72,16 @@
 
   AST.ArgList.prototype = new AST();
 
+  AST.ArgList.prototype.assertAssignableFrom = function(exprs) {
+    this.arg.assertAssignableFrom(exprs.expr);
+
+    if ( this.args && exprs.exprs ) {
+      this.args.assertAssignableFrom(exprs.exprs);
+    } else if ( this.args || exprs.exprs ) {
+      throw new NewSyntaxError('function parameter size not matched', exprs.exprs, this.args);
+    }
+  };
+
   AST.Arg = function Arg(type, id) {
     AST.apply(this, arguments);
 
@@ -78,6 +90,13 @@
   };
 
   AST.Arg.prototype = new AST();
+
+  AST.Arg.prototype.assertAssignableFrom = function(expr) {
+    if (!this.type.isAssignableFrom(expr.type)) {
+      throw new NewSyntaxError('function parameter type not matched', expr.type, this.type);
+    }
+    return true;
+  };
 
   AST.Arg.prototype.accept = function(visitor) {
     visitor.visitArg(this);
@@ -173,6 +192,11 @@
 
   AST.Stmt.ReturnStmt.prototype = new AST.Stmt();
 
+  AST.Stmt.ReturnStmt.prototype.accept = function(visitor) {
+    if (this.expr) this.expr.accept(visitor);
+    visitor.visitReturnStmt(this);
+  };
+
   AST.Stmt.ExprStmt = function ExprStmt(expr) {
     AST.Stmt.apply(this, arguments);
 
@@ -248,7 +272,11 @@
   AST.Expr.Rvalue.prototype = new AST.Expr();
 
   AST.Expr.Rvalue.prototype.inferType = function() {
-    //TODO: infer <- mag & rvalue
+    if ( this.operator ) {
+      return Token.Type.INT;
+    }
+
+    return this.mag.type;
   };
 
   AST.Expr.Mag = function Mag(term, operator, mag) {
@@ -261,6 +289,20 @@
 
   AST.Expr.Mag.prototype = new AST.Expr();
 
+  AST.Expr.Mag.prototype.inferType = function() {
+    if (this.operator) {
+      if (this.term.type.isAssignableFrom(this.mag.type)) {
+        return this.term.type;
+      } else if (this.mag.type.isAssignableFrom(this.term.type)) {
+        return this.mag.type;
+      } else {
+        throw new NewSyntaxError('Cannot assign value', this.expr.type, this.id.type);
+      }
+    } else {
+      return this.term.type;
+    }
+  };
+
   AST.Expr.Term = function Term(factor, operator, term) {
     AST.Expr.apply(this, arguments);
 
@@ -271,6 +313,18 @@
 
   AST.Expr.Term.prototype = new AST.Expr();
 
+  AST.Expr.Term.prototype.inferType = function() {
+    if (this.opeartor) {
+      if (this.factor.type.isAssignableFrom(this.term.type)) {
+        return this.factor.type;
+      } else if (this.term.type.isAssignableFrom(this.factor.type)) {
+        return this.term.type;
+      }
+    } else {
+      return this.factor.type;
+    }
+  };
+
   AST.Expr.Factor = function Factor(expr) {
     AST.Expr.apply(this, arguments);
 
@@ -278,6 +332,10 @@
   };
 
   AST.Expr.Factor.prototype = new AST.Expr();
+
+  AST.Expr.Factor.prototype.inferType = function() {
+    return this.expr.type;
+  };
 
   AST.Expr.Factor.UnaryFactor = function UnaryFactor(operator, factor) {
     AST.Expr.Factor.apply(this, arguments);
@@ -288,6 +346,10 @@
 
   AST.Expr.Factor.UnaryFactor.prototype = new AST.Expr.Factor();
 
+  AST.Expr.Factor.UnaryFactor.prototype.inferType = function() {
+    return this.factor.type;
+  };
+
   AST.Expr.Factor.FunctionCall = function FunctionCall(id, params) {
     AST.Expr.Factor.apply(this, arguments);
 
@@ -296,6 +358,16 @@
   };
 
   AST.Expr.Factor.FunctionCall.prototype = new AST.Expr.Factor();
+
+  AST.Expr.Factor.FunctionCall.prototype.inferType = function() {
+    return this.id.type;
+  };
+
+  AST.Expr.Factor.FunctionCall.prototype.accept = function() {
+    AST.Expr.Factor.prototype.accept.apply(this, arguments);
+
+    return this.id.decl.args.assertAssignableFrom(this.params);
+  };
 
   AST.ExprList = function ExprList(expr, exprs) {
     AST.apply(this, arguments);

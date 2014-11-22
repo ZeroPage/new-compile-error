@@ -30,7 +30,7 @@
   Token.Type.prototype = new Token();
 
   Token.Type.prototype.isAssignableFrom = function(type) {
-    return (this.value === type) ||
+    return (this.value === type.value) ||
       (this.value === 'float' && type.value === 'int');
   };
 
@@ -101,6 +101,7 @@
 
   Token.Number.Integer = function IntegerToken(buffer) {
     Token.Number.apply(this, arguments);
+    this.type = Token.Type.INT;
   };
 
   Token.Number.Integer.prototype = new Token.Number();
@@ -169,7 +170,8 @@
     'for': Token.Keyword.FOR,
     'while': Token.Keyword.WHILE,
     'if': Token.Keyword.IF,
-    'else': Token.Keyword.ELSE
+    'else': Token.Keyword.ELSE,
+    'return': Token.Keyword.RETURN
   };
 
   Token.WORD = function WORD(buffer) {
