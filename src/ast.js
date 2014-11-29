@@ -224,7 +224,7 @@
     return null;
   };
 
-  AST.Expr.prototype.getType = function() {
+  AST.Expr.prototype.inferType = function() {
     return null;
   };
 
