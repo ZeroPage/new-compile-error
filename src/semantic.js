@@ -1,9 +1,11 @@
 (function(exports) {
   "use strict";
 
-  var Context, ScopeStack, StdEnvironment, Visitor, NewSyntaxError, isAssignableFrom;
+  var Context, ScopeStack, StdEnvironment, Visitor, NewSyntaxError, isAssignableFrom, AST, Token;
 
   NewSyntaxError = require('./error').NewSyntaxError;
+  AST = require('./ast').AST;
+  Token = require('./token').Token;
 
   /* jshint ignore:start */
   StdEnvironment = new (function Scope() {
@@ -37,7 +39,11 @@
   };
 
   ScopeStack.prototype.getSymbol = function(symbol) {
-    return this.current[symbol.value || symbol];
+    var _symbol = this.current[symbol.value || symbol];
+    if (!_symbol) {
+      throw new NewSyntaxError("Undefined symbol", symbol);
+    }
+    return _symbol;
   };
 
   Visitor = function Visitor(context) {
@@ -71,14 +77,17 @@
 
   Visitor.prototype.visitIdentifier = function(node) {
     var symbol = this.context.scopeStack.getSymbol(node);
-    node.type = symbol.type;
+    if (symbol.node instanceof AST.FunctionDecl) {
+      node.type = Token.Type.FunctionType[symbol.type];
+    } else {
+      node.type = symbol.type;
+    }
     node.decl = symbol.node;
   };
 
   Visitor.prototype.visitReturnStmt = function(node) {
-    // FIXME
-    if (!this.context.scopeStack.$decl.id.type.isAssignableFrom(node.expr.type)) {
-      throw new NewSyntaxError('function return type is not matched', node.expr.type, this.context.scopeStack.$decl.id.type);
+    if (!this.context.scopeStack.current.$decl.type.isAssignableFrom(node.expr.type)) {
+      throw new NewSyntaxError('function return type is not matched', node.expr.type, this.context.scopeStack.current.$decl.type);
     }
   };
 
@@ -96,7 +105,7 @@
       ast.accept(new Visitor(new Context(new ScopeStack())));
     } catch (e) {
       if (e instanceof NewSyntaxError) {
-        console.error(e.message, e.actual);
+        console.error(e.message, e.actual, e.expected);
       } else {
         console.error(e);
       }

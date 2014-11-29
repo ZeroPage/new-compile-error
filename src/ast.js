@@ -296,7 +296,7 @@
       } else if (this.mag.type.isAssignableFrom(this.term.type)) {
         return this.mag.type;
       } else {
-        throw new NewSyntaxError('Cannot assign value', this.expr.type, this.id.type);
+        throw new NewSyntaxError('Invalid operands', [this.term.type, this.mag.type], this.operator);
       }
     } else {
       return this.term.type;
@@ -320,7 +320,7 @@
       } else if (this.term.type.isAssignableFrom(this.factor.type)) {
         return this.term.type;
       } else {
-        throw new NewSyntaxError('Cannot assign value', this.expr.type, this.id.type);
+        throw new NewSyntaxError('Invalid operands', [this.factor.type, this.term.type], this.operator);
       }
     } else {
       return this.factor.type;
@@ -362,7 +362,7 @@
   AST.Expr.Factor.FunctionCall.prototype = new AST.Expr.Factor();
 
   AST.Expr.Factor.FunctionCall.prototype.inferType = function() {
-    return this.id.type;
+    return this.id.type.token;
   };
 
   AST.Expr.Factor.FunctionCall.prototype.accept = function() {

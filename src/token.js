@@ -4,14 +4,20 @@
   var Token, SYMBOL_DICTIONARY, WORD_DICTIONARY;
 
   Token = function Token(token) {
-    this.value = token;
+    if (token instanceof Token) {
+      this.value = token.value;
+      this.token = token;
+    } else {
+      this.value = token;
+    }
   };
 
   Token.prototype.accept = function(visitor) {
   };
 
   Token.prototype.is = function(tokenType) {
-    return this === tokenType || typeof tokenType === 'function' && this instanceof tokenType ||
+    return this === tokenType ||
+      typeof tokenType === 'function' && this instanceof tokenType ||
       this.tokenTypeIs(tokenType);
   };
 
@@ -23,19 +29,46 @@
     return this.tokenType;
   };
 
-  Token.Type = function Type(token) {
+  Token.prototype.toString = function() {
+    return this.value;
+  };
+
+  var Type = function Type(token) {
     Token.apply(this, arguments);
   };
 
-  Token.Type.prototype = new Token();
+  Type.prototype = new Token();
 
-  Token.Type.prototype.isAssignableFrom = function(type) {
-    return (this.value === type.value) ||
-      (this.value === 'float' && type.value === 'int');
+  Type.prototype.isAssignableFrom = function(type) {
+    return (this === type) ||
+      (this === Token.Type.FLOAT && type === Token.Type.INT);
   };
 
-  Token.Type.INT = new Token.Type('int');
-  Token.Type.FLOAT = new Token.Type('float');
+  Type.prototype.getTokenType = function() {
+    return Token.Type;
+  };
+
+  Type.FunctionType = function FunctionType(token) {
+    Type.apply(this, arguments);
+  };
+
+  Type.FunctionType.prototype = new Type();
+
+  Type.FunctionType.prototype.isAssignableFrom = function(type) {
+    return false;
+  };
+
+  Type.FunctionType.prototype.getTokenType = function() {
+    return Token.Type.FunctionType;
+  };
+
+  Token.Type = {};
+  Token.Type.INT = new Type('int');
+  Token.Type.FLOAT = new Type('float');
+
+  Token.Type.FunctionType = {};
+  Token.Type.FunctionType[Token.Type.INT] = new Type.FunctionType(Token.Type.INT);
+  Token.Type.FunctionType[Token.Type.FLOAT] = new Type.FunctionType(Token.Type.FLOAT);
 
   Token.SEMICOLON = new Token(';');
   Token.COMMA = new Token(',');
