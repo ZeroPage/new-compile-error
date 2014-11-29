@@ -319,6 +319,8 @@
         return this.factor.type;
       } else if (this.term.type.isAssignableFrom(this.factor.type)) {
         return this.term.type;
+      } else {
+        throw new NewSyntaxError('Cannot assign value', this.expr.type, this.id.type);
       }
     } else {
       return this.factor.type;
