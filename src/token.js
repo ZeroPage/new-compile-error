@@ -1,7 +1,7 @@
 (function(exports) {
   "use strict";
 
-  var Token, SYMBOL_DICTIONARY, WORD_DICTIONARY;
+  var Token, SYMBOL_DICTIONARY, WORD_DICTIONARY, Position;
 
   Token = function Token(token) {
     if (token instanceof Token) {
@@ -18,6 +18,7 @@
   Token.prototype.is = function(tokenType) {
     return this === tokenType ||
       typeof tokenType === 'function' && this instanceof tokenType ||
+      tokenType.isPrototypeOf(this) ||
       this.tokenTypeIs(tokenType);
   };
 
@@ -33,6 +34,11 @@
     return this.value;
   };
 
+  Token.Position = function Position(line, column) {
+    this.line = line;
+    this.column = column;
+  };
+
   var Type = function Type(token) {
     Token.apply(this, arguments);
   };
@@ -40,8 +46,11 @@
   Type.prototype = new Token();
 
   Type.prototype.isAssignableFrom = function(type) {
-    return (this === type) ||
-      (this === Token.Type.FLOAT && type === Token.Type.INT);
+    return (this === type) || type.isPrototypeOf(this) || this.isPrototypeOf(type) || Object.getPrototypeOf(this) === Object.getPrototypeOf(type) ||
+      (
+        (this === Token.Type.FLOAT || Token.Type.FLOAT.isPrototypeOf(this)) &&
+        (type === Token.Type.INT || Token.Type.INT.isPrototypeOf(type))
+      );
   };
 
   Type.prototype.getTokenType = function() {

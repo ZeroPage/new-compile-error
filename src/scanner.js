@@ -1,9 +1,28 @@
 (function(exports) {
   'use strict';
 
-  var Scanner, CharScanner, Token;
+  var Scanner, CharScanner, Token, Position;
 
   Token = require('./token').Token;
+
+  Position = function Position() {
+    Token.Position.apply(this, [0, 0]);
+  };
+
+  Position.prototype = new Token.Position();
+
+  Position.prototype.current = function() {
+    return new Token.Position(this.line, this.column);
+  };
+
+  Position.prototype.nextLine = function() {
+    this.line++;
+    this.column = 0;
+  };
+
+  Position.prototype.nextColumn = function() {
+    this.column++;
+  };
 
   function FILTER_BY_TYPE(type) {
     return function(element) {
@@ -35,6 +54,7 @@
 
     this.buffer = [];
     this.consumed = [];
+    this.position = new Position();
 
     for (i = 0; i < scripts.length; i++) {
       this.scanScript(scripts[i]);
@@ -46,7 +66,7 @@
       throw new Error('script element is invalid');
     }
 
-    this.buffer = this.buffer.concat(script.innerText.split(''));
+    this.buffer = this.buffer.concat(script.innerText.replace(/\r\n?/g, '\n').split(''));
   };
 
   CharScanner.prototype.nextChar = function() {
@@ -54,24 +74,17 @@
   };
 
   CharScanner.prototype.readChar = function() {
+    if(this.isEOL()) {
+      this.position.nextLine();
+    } else {
+      this.position.nextColumn();
+    }
+
     var char = this.buffer.shift();
     this.consumed.push(char);
     this.char = this.buffer[0];
+
     return char;
-  };
-
-  CharScanner.prototype.pushback = function(length) {
-    var i;
-
-    if (typeof length === 'number') {
-      for (i = 0; i < length; i++) {
-        this.pushback();
-      }
-      return;
-    }
-    var char = this.consumed.pop();
-    this.buffer.unshift(char);
-    this.char = char;
   };
 
   CharScanner.prototype.isAlpha = function() {
@@ -93,6 +106,10 @@
 
   CharScanner.prototype.isWhitespace = function() {
     return this.char === ' ' || this.char === '\t' || this.char === '\n' || this.char === '\r';
+  };
+
+  CharScanner.prototype.isEOL = function() {
+    return this.char === '\n';
   };
 
   Scanner = function Scanner() {
@@ -152,6 +169,8 @@
       }
 
       if (token) {
+        token = Object.create(token);
+        token.position = charScanner.position.current();
         tokens.push(token);
       }
     }
