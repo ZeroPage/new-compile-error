@@ -17,6 +17,7 @@
     } catch (e) {
       if (e instanceof NewSyntaxError) {
         console.error(e.message, e.actual, e.expected);
+        console.error(e.toString());
       } else {
         console.error(e);
       }

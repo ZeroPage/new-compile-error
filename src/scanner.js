@@ -5,19 +5,19 @@
 
   Token = require('./token').Token;
 
-  Position = function Position() {
-    Token.Position.apply(this, [0, 0]);
+  Position = function Position(source) {
+    Token.Position.apply(this, [1, 1, source]);
   };
 
   Position.prototype = new Token.Position();
 
   Position.prototype.current = function() {
-    return new Token.Position(this.line, this.column);
+    return new Token.Position(this.line, this.column, this.source);
   };
 
   Position.prototype.nextLine = function() {
     this.line++;
-    this.column = 0;
+    this.column = 1;
   };
 
   Position.prototype.nextColumn = function() {
@@ -54,19 +54,25 @@
 
     this.buffer = [];
     this.consumed = [];
-    this.position = new Position();
 
     for (i = 0; i < scripts.length; i++) {
       this.scanScript(scripts[i]);
     }
+
+    this.position = new Position(this.buffer.join(''));
   };
 
   CharScanner.prototype.scanScript = function(script) {
     if (!script || script.tagName.toUpperCase() !== 'SCRIPT' || !script.src && !/[^\s]/.test(script.innerText)) {
       throw new Error('script element is invalid');
     }
+    var buffer = script.innerText.replace(/\r\n?/g, '\n').split('');
+    if (buffer[0] === '\n') {
+      buffer.shift();
+    }
+    this.buffer = this.buffer.concat(buffer);
 
-    this.buffer = this.buffer.concat(script.innerText.replace(/\r\n?/g, '\n').split(''));
+    this.char = this.buffer[0];
   };
 
   CharScanner.prototype.nextChar = function() {
@@ -123,6 +129,7 @@
 
     while (charScanner.nextChar()) {
       buffer = '';
+      var position = charScanner.position.current();
 
       // IDENTIFIER || TYPE_INT || TYPE_FLOAT || KEYWORD
       if (charScanner.isIdentifierStartChar()) {
@@ -170,7 +177,8 @@
 
       if (token) {
         token = Object.create(token);
-        token.position = charScanner.position.current();
+
+        token.position = position;
         tokens.push(token);
       }
     }

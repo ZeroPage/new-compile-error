@@ -11,5 +11,11 @@
 
   NewSyntaxError.prototype = new Error();
 
+  NewSyntaxError.prototype.toString = function() {
+    if (this.actual.position) {
+      return this.message + ' ' + this.actual.position.toString();
+    }
+  };
+
   exports.NewSyntaxError = NewSyntaxError;
 })((module || {exports: {}}).exports);

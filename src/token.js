@@ -34,9 +34,16 @@
     return this.value;
   };
 
-  Token.Position = function Position(line, column) {
+  Token.Position = function Position(line, column, source) {
     this.line = line;
     this.column = column;
+    this.source = source;
+  };
+
+  Token.Position.prototype.toString = function() {
+    var source = this.source.split('\n')[this.line - 1];
+    var mark = new Array(this.column).join(' ') + '^';
+    return "Line: " + this.line + " Column: " + this.column + '\n' + source + '\n' + mark;
   };
 
   var Type = function Type(token) {
