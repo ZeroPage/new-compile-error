@@ -20,6 +20,9 @@
     }
   };
 
+  AST.prototype.execute = function(context) {
+  };
+
   AST.Program = function Program(decls) {
     AST.apply(this, arguments);
 
@@ -197,6 +200,10 @@
     visitor.visitReturnStmt(this);
   };
 
+  AST.Stmt.ReturnStmt.prototype.execute = function(context) {
+    this.expr.evaluate();
+  };
+
   AST.Stmt.ExprStmt = function ExprStmt(expr) {
     AST.Stmt.apply(this, arguments);
 
@@ -249,6 +256,10 @@
     return this.id.type;
   };
 
+  AST.Expr.AssignExpr.prototype.evaluate = function(context) {
+    // TODO: manage state of runtime context
+  };
+
   AST.Expr.RvalueExpr = function RvalueExpr(rvalue) {
     AST.Expr.apply(this, arguments);
 
@@ -261,35 +272,53 @@
     return this.rvalue.type;
   };
 
-  AST.Expr.Rvalue = function Rvalue(mag, operator, rvalue) {
+  AST.Expr.BinaryExpr = function BinaryExpr(operand1, operator, operand2) {
     AST.Expr.apply(this, arguments);
+
+    this.operand1 = operand1;
+    this.operator = operator;
+    this.operand2 = operand2;
+  };
+
+  AST.Expr.BinaryExpr.prototype = new AST.Expr();
+
+  AST.Expr.BinaryExpr.prototype.evaluate = function(context) {
+    if (this.operator) {
+      return this.operator.operate(this.operand1.evaluate(context), this.operand2.evaluate(context));
+    } else {
+      return this.operand1.evaluate(context);
+    }
+  };
+
+  AST.Expr.BinaryExpr.Rvalue = function Rvalue(mag, operator, rvalue) {
+    AST.Expr.BinaryExpr.apply(this, arguments);
 
     this.mag = mag;
     this.operator = operator;
     this.rvalue = rvalue;
   };
 
-  AST.Expr.Rvalue.prototype = new AST.Expr();
+  AST.Expr.BinaryExpr.Rvalue.prototype = new AST.Expr.BinaryExpr();
 
-  AST.Expr.Rvalue.prototype.inferType = function() {
-    if ( this.operator ) {
+  AST.Expr.BinaryExpr.Rvalue.prototype.inferType = function() {
+    if (this.operator) {
       return Token.Type.INT;
     }
 
     return this.mag.type;
   };
 
-  AST.Expr.Mag = function Mag(term, operator, mag) {
-    AST.Expr.apply(this, arguments);
+  AST.Expr.BinaryExpr.Mag = function Mag(term, operator, mag) {
+    AST.Expr.BinaryExpr.apply(this, arguments);
 
     this.term = term;
     this.operator = operator;
     this.mag = mag;
   };
 
-  AST.Expr.Mag.prototype = new AST.Expr();
+  AST.Expr.BinaryExpr.Mag.prototype = new AST.Expr.BinaryExpr();
 
-  AST.Expr.Mag.prototype.inferType = function() {
+  AST.Expr.BinaryExpr.Mag.prototype.inferType = function() {
     if (this.operator) {
       if (this.term.type.isAssignableFrom(this.mag.type)) {
         return this.term.type;
@@ -303,17 +332,17 @@
     }
   };
 
-  AST.Expr.Term = function Term(factor, operator, term) {
-    AST.Expr.apply(this, arguments);
+  AST.Expr.BinaryExpr.Term = function Term(factor, operator, term) {
+    AST.Expr.BinaryExpr.apply(this, arguments);
 
     this.factor = factor;
     this.operator = operator;
     this.term = term;
   };
 
-  AST.Expr.Term.prototype = new AST.Expr();
+  AST.Expr.BinaryExpr.Term.prototype = new AST.Expr.BinaryExpr();
 
-  AST.Expr.Term.prototype.inferType = function() {
+  AST.Expr.BinaryExpr.Term.prototype.inferType = function() {
     if (this.opeartor) {
       if (this.factor.type.isAssignableFrom(this.term.type)) {
         return this.factor.type;
@@ -339,6 +368,10 @@
     return this.expr.type;
   };
 
+  AST.Expr.Factor.prototype.evaluate = function(context) {
+    return this.expr.evaluate(context);
+  };
+
   AST.Expr.Factor.UnaryFactor = function UnaryFactor(operator, factor) {
     AST.Expr.Factor.apply(this, arguments);
 
@@ -350,6 +383,10 @@
 
   AST.Expr.Factor.UnaryFactor.prototype.inferType = function() {
     return this.factor.type;
+  };
+
+  AST.Expr.Factor.UnaryFactor.prototype.evaluate = function(context) {
+    return this.operator.operate(0, this.factor.evaluate(context));
   };
 
   AST.Expr.Factor.FunctionCall = function FunctionCall(id, params) {
@@ -369,6 +406,20 @@
     AST.Expr.Factor.prototype.accept.apply(this, arguments);
 
     return this.id.decl.args.assertAssignableFrom(this.params);
+  };
+
+  AST.Expr.Factor.FunctionCall.prototype.evaluate = function(context) {
+    var returnValue, params;
+    for (params = this.params; params; params = params.exprs) {
+      context.stack.push(params.expr.evalute(context));
+    }
+    this.id.decl.execute(context);
+    //TODO: IF VOID, DON'T POP
+    returnValue = context.stack.pop();
+    for (params = this.params; params; params = params.exprs) {
+      context.stack.pop();
+    }
+    return returnValue;
   };
 
   AST.ExprList = function ExprList(expr, exprs) {

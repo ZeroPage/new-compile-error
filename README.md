@@ -45,7 +45,7 @@ AddSub ::= "+"
          | "-"
 Term ::= Factor ( MulDiv Term ) ?
 MulDiv ::= "*"
-           | "/"
+         | "/"
 Factor ::= "(" Expr ")"
          | AddSub Factor
          | identifier "(" ExprList ? ")"

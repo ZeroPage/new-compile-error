@@ -43,7 +43,7 @@
   Token.Position.prototype.toString = function() {
     var source = this.source.split('\n')[this.line - 1];
     var mark = new Array(this.column).join(' ') + '^';
-    return "Line: " + this.line + " Column: " + this.column + '\n' + source + '\n' + mark;
+    return "Line " + this.line + ", Column " + this.column + '\n' + source + '\n' + mark;
   };
 
   var Type = function Type(token) {
@@ -119,10 +119,10 @@
   Token.Keyword.ELSE = new Token.Keyword('else');
   Token.Keyword.RETURN = new Token.Keyword('return');
 
-  Token.Operator = function Operator(buffer, tokenType) {
+  Token.Operator = function Operator(buffer, operate) {
     Token.apply(this, arguments);
 
-    this.tokenType = tokenType;
+    this.operate = operate;
   };
 
   Token.Operator.prototype = new Token();
@@ -135,7 +135,7 @@
       (this.value === '*' || this.value === '/') && Token.Operator.MulDiv;
   };
 
-  Token.Operator.Compare = function CompareOperator(buffer) {
+  Token.Operator.Compare = function CompareOperator(buffer, operate) {
     Token.Operator.apply(this, arguments);
   };
 
@@ -158,31 +158,51 @@
   SYMBOL_DICTIONARY = {
     ';': {__TOKEN__: Token.SEMICOLON},
     ',': {__TOKEN__: Token.COMMA},
-    '+': {__TOKEN__: new Token.Operator('+')},
-    '-': {__TOKEN__: new Token.Operator('-')},
-    '*': {__TOKEN__: new Token.Operator('*')},
-    '/': {__TOKEN__: new Token.Operator('/')},
+    '+': {__TOKEN__: new Token.Operator('+', function(a, b) {
+      return a + b;
+    })},
+    '-': {__TOKEN__: new Token.Operator('-', function(a, b) {
+      return a - b;
+    })},
+    '*': {__TOKEN__: new Token.Operator('*', function(a, b) {
+      return a * b;
+    })},
+    '/': {__TOKEN__: new Token.Operator('/', function(a, b) {
+      return a / b;
+    })},
     '!': {
       '=': {
-        __TOKEN__: new Token.Operator.Compare('!=')
+        __TOKEN__: new Token.Operator.Compare('!=', function(a, b) {
+          return a !== b;
+        })
       }
     },
     '>': {
-      __TOKEN__: new Token.Operator.Compare('>'),
+      __TOKEN__: new Token.Operator.Compare('>', function(a, b) {
+        return a > b;
+      }),
       '=': {
-        __TOKEN__: new Token.Operator.Compare('>=')
+        __TOKEN__: new Token.Operator.Compare('>=', function(a, b) {
+          return a >= b;
+        })
       }
     },
     '<': {
-      __TOKEN__: new Token.Operator.Compare('<'),
+      __TOKEN__: new Token.Operator.Compare('<', function(a, b) {
+        return a < b;
+      }),
       '=': {
-        __TOKEN__: new Token.Operator.Compare('<=')
+        __TOKEN__: new Token.Operator.Compare('<=', function(a, b) {
+          return a <= b;
+        })
       }
     },
     '=': {
       __TOKEN__: Token.ASSIGN,
       '=': {
-        __TOKEN__: new Token.Operator.Compare('==')
+        __TOKEN__: new Token.Operator.Compare('==', function(a, b) {
+          return a === b;
+        })
       }
     },
     '(': {__TOKEN__: Token.LPAREN},

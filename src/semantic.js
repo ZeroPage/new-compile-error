@@ -92,7 +92,8 @@
   };
 
   Context = function Context(scopeStack) {
-    this.scopeStack = scopeStack; 
+    this.scopeStack = scopeStack;
+    this.stack = [];
   };
 
   exports.Analyzer = function SemanticAnalyzer(ast) {
