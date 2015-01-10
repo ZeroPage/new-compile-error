@@ -20,9 +20,6 @@
     }
   };
 
-  AST.prototype.execute = function(context) {
-  };
-
   AST.Program = function Program(decls) {
     AST.apply(this, arguments);
 
@@ -30,6 +27,11 @@
   };
 
   AST.Program.prototype = new AST();
+
+  AST.Program.prototype.execute = function(context) {
+    this.decls.execute(context);
+    context.getFunction('main').decl.execute(context);
+  };
 
   AST.DeclList = function DeclList(decl, decls) {
     AST.apply(this, arguments);
@@ -39,6 +41,11 @@
   };
 
   AST.DeclList.prototype = new AST();
+
+  AST.DeclList.prototype.execute = function(context) {
+    this.decl.execute(context);
+    this.decls.execute(context);
+  };
 
   AST.VarDeclList = function VarDeclList(decl, decls) {
     AST.apply(this, arguments);
@@ -64,6 +71,10 @@
     visitor.visitFunctionDecl(this);
     if (this.args) this.args.accept(visitor);
     if (this.stmts) this.stmts.accept(visitor);
+  };
+
+  AST.FunctionDecl.prototype.execute = function(context) {
+
   };
 
   AST.ArgList = function ArgList(arg, args) {
@@ -133,6 +144,11 @@
   AST.IdentList.prototype.accept = function(visitor) {
     visitor.visitIdentList(this);
     if (this.idList) this.idList.accept(visitor);
+  };
+
+  AST.IdentList.prototype.execute = function(context) {
+    this.id.decl.$value = this.type.cast(this.expr.evaluate(context));
+    this.idList.execute(context);
   };
 
   AST.Stmt = function Stmt() {
@@ -258,6 +274,8 @@
 
   AST.Expr.AssignExpr.prototype.evaluate = function(context) {
     // TODO: manage state of runtime context
+    // move decl.$value into runtime context stack
+    return (this.id.decl.$value = this.id.type.cast(this.expr.evaluate(context)));
   };
 
   AST.Expr.RvalueExpr = function RvalueExpr(rvalue) {

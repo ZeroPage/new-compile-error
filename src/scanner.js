@@ -177,11 +177,14 @@
 
       if (token) {
         token = Object.create(token);
-
         token.position = position;
         tokens.push(token);
       }
     }
+    token = Object.create(Token.EOF);
+    token.position = charScanner.position.current();
+    tokens.push(token);
+
     return tokens;
   };
 

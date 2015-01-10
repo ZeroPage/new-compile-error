@@ -46,8 +46,10 @@
     return "Line " + this.line + ", Column " + this.column + '\n' + source + '\n' + mark;
   };
 
-  var Type = function Type(token) {
+  var Type = function Type(token, cast) {
     Token.apply(this, arguments);
+
+    this.cast = cast;
   };
 
   Type.prototype = new Token();
@@ -79,8 +81,8 @@
   };
 
   Token.Type = {};
-  Token.Type.INT = new Type('int');
-  Token.Type.FLOAT = new Type('float');
+  Token.Type.INT = new Type('int', parseInt);
+  Token.Type.FLOAT = new Type('float', parseFloat);
 
   Token.Type.FunctionType = {};
   Token.Type.FunctionType[Token.Type.INT] = new Type.FunctionType(Token.Type.INT);
@@ -97,6 +99,12 @@
   Token.RBRACKET = new Token(']');
   Token.ASSIGN = new Token('=');
 
+  Token.EOF = function EOF() {
+    Token.apply(this, arguments);
+  };
+
+  Token.EOF.prototype = new Token();
+
   Token.Identifier = function Identifier(buffer) {
     Token.apply(this, arguments);
   };
@@ -105,6 +113,10 @@
 
   Token.Identifier.prototype.accept = function(visitor) {
     visitor.visitIdentifier(this);
+  };
+
+  Token.Identifier.prototype.evaluate = function(context) {
+    return this.decl.$value;
   };
 
   Token.Keyword = function Keyword(buffer) {
@@ -150,10 +162,27 @@
 
   Token.Number.Integer = function IntegerToken(buffer) {
     Token.Number.apply(this, arguments);
+
     this.type = Token.Type.INT;
   };
 
   Token.Number.Integer.prototype = new Token.Number();
+
+  Token.Number.Integer.prototype.evaluate = function(context) {
+    return parseInt(this.value);
+  };
+
+  Token.Number.Float = function FloatToken(buffer) {
+    Token.Number.apply(this, arguments);
+
+    this.type = Token.Type.FLOAT;
+  };
+
+  Token.Number.Float.prototype = new Token.Number();
+
+  Token.Number.Float.prototype.evaluate = function(context) {
+    return parseFloat(this.value);
+  };
 
   SYMBOL_DICTIONARY = {
     ';': {__TOKEN__: Token.SEMICOLON},

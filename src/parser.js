@@ -14,6 +14,7 @@
     parser = new LLParser(tokens);
     try {
       ast = parser.takeProgram();
+      parser.takeIt(Token.EOF);
     } catch (e) {
       if (e instanceof NewSyntaxError) {
         console.error(e.message, e.actual, e.expected);
@@ -237,7 +238,7 @@
       operator = this.takeIt();
       rvalue = this.takeRvalue();
     }
-    return new AST.Expr.Rvalue(mag, operator, rvalue);
+    return new AST.Expr.BinaryExpr.Rvalue(mag, operator, rvalue);
   };
 
   LLParser.prototype.takeMag = function() {
@@ -247,7 +248,7 @@
       operator = this.takeIt();
       mag = this.takeMag();
     }
-    return new AST.Expr.Mag(term, operator, mag);
+    return new AST.Expr.BinaryExpr.Mag(term, operator, mag);
   };
 
   LLParser.prototype.takeTerm = function() {
@@ -257,7 +258,7 @@
       operator = this.takeIt(Token.Operator.MulDiv);
       term = this.takeTerm();
     }
-    return new AST.Expr.Term(factor, operator, term);
+    return new AST.Expr.BinaryExpr.Term(factor, operator, term);
   }; 
 
   LLParser.prototype.takeFactor = function() {

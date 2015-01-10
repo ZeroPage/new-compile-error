@@ -5,15 +5,16 @@
   </head>
   <body>
     <script type="text/minic">
-      float add(float a, int b) {
+      int add(int a, int b) {
         return a+b;
       }
+      int x = add(1,2);
       int main(int argc) {
         int i, a;
-        float f;
+        int f;
         if (argc > 0)
           for (i = argc; i < 10; i = i + 1) {
-            float a = argc - i;
+            int a = argc - i;
             argc = argc;
             f = add(a, 2);
           }
@@ -23,6 +24,7 @@
 
         return i + a;
       }
+      x = 5;
     </script>
     <script type="text/javascript" src="../dist/minic.js"></script>
   </body>
