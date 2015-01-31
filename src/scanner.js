@@ -181,7 +181,7 @@
         tokens.push(token);
       }
     }
-    token = Object.create(Token.EOF);
+    token = Object.create(new Token.EOF());
     token.position = charScanner.position.current();
     tokens.push(token);
 

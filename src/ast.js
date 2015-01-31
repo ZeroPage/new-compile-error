@@ -74,7 +74,7 @@
   };
 
   AST.FunctionDecl.prototype.execute = function(context) {
-
+    this.stmts.execute(context);
   };
 
   AST.ArgList = function ArgList(arg, args) {
@@ -217,7 +217,7 @@
   };
 
   AST.Stmt.ReturnStmt.prototype.execute = function(context) {
-    this.expr.evaluate();
+    context.setReturn(this.expr.evaluate());
   };
 
   AST.Stmt.ExprStmt = function ExprStmt(expr) {
@@ -275,7 +275,7 @@
   AST.Expr.AssignExpr.prototype.evaluate = function(context) {
     // TODO: manage state of runtime context
     // move decl.$value into runtime context stack
-    return (this.id.decl.$value = this.id.type.cast(this.expr.evaluate(context)));
+    return context.setValue(this.id.decl, this.id.type.cast(this.expr.evaluate(context)));
   };
 
   AST.Expr.RvalueExpr = function RvalueExpr(rvalue) {
@@ -428,15 +428,19 @@
 
   AST.Expr.Factor.FunctionCall.prototype.evaluate = function(context) {
     var returnValue, params;
+    context.pushFrame(this.id.decl);
     for (params = this.params; params; params = params.exprs) {
       context.stack.push(params.expr.evalute(context));
     }
     this.id.decl.execute(context);
     //TODO: IF VOID, DON'T POP
-    returnValue = context.stack.pop();
+    //if (!this.id.decl.type.is(Token.Type.VOID)) {
+      returnValue = context.getReturn();
+    //}
     for (params = this.params; params; params = params.exprs) {
       context.stack.pop();
     }
+    context.popFrame();
     return returnValue;
   };
 

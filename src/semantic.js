@@ -21,7 +21,10 @@
     function Scope($parent) { this.$parent = $parent; }
     Scope.prototype = this.current;
     this.current = new Scope(this.current);
-    this.current.$decl = node;
+    if (node) {
+      this.current.$decl = node;
+      this.current.$decl.$symbolSize = 0;
+    }
   };
 
   ScopeStack.prototype.popScope = function() {
@@ -31,6 +34,9 @@
   ScopeStack.prototype.putSymbol = function(symbol, type, node) {
     if (this.current.hasOwnProperty(symbol.value || symbol)) {
       throw new NewSyntaxError("Duplicate declaration in current scope", symbol);
+    }
+    if (this.current.$decl) {
+      node.$index = this.current.$decl.$symbolSize++;
     }
     this.current[symbol.value || symbol] = {
       type: type,
