@@ -12,4 +12,8 @@
   console.log("AST: ", ast);
 
   require('./src/semantic').Analyzer(ast);
+
+  require('./src/linker').Linker(ast);
+
+  require('./src/runtime').Runtime(ast);
 })();

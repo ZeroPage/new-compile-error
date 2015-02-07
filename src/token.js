@@ -83,10 +83,12 @@
   Token.Type = {};
   Token.Type.INT = new Type('int', parseInt);
   Token.Type.FLOAT = new Type('float', parseFloat);
+  Token.Type.VOID = new Type('void');
 
   Token.Type.FunctionType = {};
   Token.Type.FunctionType[Token.Type.INT] = new Type.FunctionType(Token.Type.INT);
   Token.Type.FunctionType[Token.Type.FLOAT] = new Type.FunctionType(Token.Type.FLOAT);
+  Token.Type.FunctionType[Token.Type.VOID] = new Type.FunctionType(Token.Type.VOID);
 
   Token.SEMICOLON = new Token(';');
   Token.COMMA = new Token(',');
@@ -116,7 +118,7 @@
   };
 
   Token.Identifier.prototype.evaluate = function(context) {
-    return this.decl.$value;
+    return context.getValue(this.decl);
   };
 
   Token.Keyword = function Keyword(buffer) {

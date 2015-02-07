@@ -15,7 +15,21 @@
     if (this.actual.position) {
       return this.message + ' ' + this.actual.position.toString();
     }
+    return this.message;
+  };
+
+  var NewRuntimeError = function NewRuntimeError(message) {
+    Error.apply(this, arguments);
+
+    this.message = message;
+  };
+
+  NewRuntimeError.prototype = new Error();
+
+  NewRuntimeError.prototype.toString = function() {
+    return this.message;
   };
 
   exports.NewSyntaxError = NewSyntaxError;
+  exports.NewRuntimeError = NewRuntimeError;
 })((module || {exports: {}}).exports);

@@ -1,11 +1,12 @@
 (function(exports) {
   "use strict";
 
-  var Context, ScopeStack, StdEnvironment, Visitor, NewSyntaxError, isAssignableFrom, AST, Token;
+  var Context, ScopeStack, StdEnvironment, Visitor, NewSyntaxError, isAssignableFrom, AST, Token, API;
 
   NewSyntaxError = require('./error').NewSyntaxError;
   AST = require('./ast').AST;
   Token = require('./token').Token;
+  API = require('./api').API;
 
   /* jshint ignore:start */
   StdEnvironment = new (function Scope() {
@@ -103,13 +104,23 @@
   };
 
   exports.Analyzer = function SemanticAnalyzer(ast) {
-    // scope
-    // symbol table
-    // type checking
+    var visitor = new Visitor(new Context(new ScopeStack()));
 
-    // traverse AST
+    API.putInt.accept(visitor);
+    API.putFloat.accept(visitor);
+
+    StdEnvironment.putInt = {
+      type: Token.Type.INT,
+      node: API.putInt
+    };
+
+    StdEnvironment.putFloat = {
+      type: Token.Type.FLOAT,
+      node: API.putFloat
+    };
+
     try {
-      ast.accept(new Visitor(new Context(new ScopeStack())));
+      ast.accept(visitor);
     } catch (e) {
       if (e instanceof NewSyntaxError) {
         console.error(e.message, e.actual, e.expected);

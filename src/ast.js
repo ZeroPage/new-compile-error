@@ -1,13 +1,14 @@
 (function(exports) {
   "use strict";
 
-  var Token, NewSyntaxError, AST = function AST() {
+  var Token, NewSyntaxError, NewRuntimeError, AST = function AST() {
     this.arguments = arguments;
   };
   
   Token = require('./token').Token;
 
   NewSyntaxError = require('./error').NewSyntaxError;
+  NewRuntimeError = require('./error').NewRuntimeError;
 
   AST.prototype.consistOf = function() {
     return this.arguments;
@@ -20,6 +21,13 @@
     }
   };
 
+  AST.prototype.execute = function(context) {
+    var i, nodes = this.consistOf();
+    for (i = 0; i < nodes.length; i++) {
+      if (nodes[i] instanceof AST) nodes[i].execute(context);
+    }
+  };
+
   AST.Program = function Program(decls) {
     AST.apply(this, arguments);
 
@@ -29,8 +37,14 @@
   AST.Program.prototype = new AST();
 
   AST.Program.prototype.execute = function(context) {
+    var mainFunction;
     this.decls.execute(context);
-    context.getFunction('main').decl.execute(context);
+    mainFunction = context.getFunction('main');
+    mainFunction.id.decl = mainFunction;
+    new AST.Expr.Factor.FunctionCall(
+      mainFunction.id,
+      new AST.ExprList(new Token.Number.Integer('0'))
+    ).execute(context);
   };
 
   AST.DeclList = function DeclList(decl, decls) {
@@ -41,11 +55,6 @@
   };
 
   AST.DeclList.prototype = new AST();
-
-  AST.DeclList.prototype.execute = function(context) {
-    this.decl.execute(context);
-    this.decls.execute(context);
-  };
 
   AST.VarDeclList = function VarDeclList(decl, decls) {
     AST.apply(this, arguments);
@@ -74,7 +83,7 @@
   };
 
   AST.FunctionDecl.prototype.execute = function(context) {
-    this.stmts.execute(context);
+    context.addFunction(this.id.value, this);
   };
 
   AST.ArgList = function ArgList(arg, args) {
@@ -143,12 +152,14 @@
 
   AST.IdentList.prototype.accept = function(visitor) {
     visitor.visitIdentList(this);
+    this.id.accept(visitor);
+    if (this.expr) this.expr.accept(visitor);
     if (this.idList) this.idList.accept(visitor);
   };
 
   AST.IdentList.prototype.execute = function(context) {
-    this.id.decl.$value = this.type.cast(this.expr.evaluate(context));
-    this.idList.execute(context);
+    context.setValue(this.id, this.type.cast(this.expr ? this.expr.evaluate(context) : 0));
+    if (this.idList) this.idList.execute(context);
   };
 
   AST.Stmt = function Stmt() {
@@ -243,7 +254,7 @@
 
   AST.Expr.prototype = new AST();
 
-  AST.Expr.prototype.evaluate = function() {
+  AST.Expr.prototype.evaluate = function(context) {
     return null;
   };
 
@@ -254,6 +265,10 @@
   AST.Expr.prototype.accept = function(visitor) {
     AST.prototype.accept.call(this, visitor);
     this.type = this.inferType();
+  };
+
+  AST.Expr.prototype.execute = function(context) {
+    this.evaluate(context);
   };
 
   AST.Expr.AssignExpr = function AssignExpr(id, expr) {
@@ -273,8 +288,6 @@
   };
 
   AST.Expr.AssignExpr.prototype.evaluate = function(context) {
-    // TODO: manage state of runtime context
-    // move decl.$value into runtime context stack
     return context.setValue(this.id.decl, this.id.type.cast(this.expr.evaluate(context)));
   };
 
@@ -288,6 +301,10 @@
 
   AST.Expr.RvalueExpr.prototype.inferType = function() {
     return this.rvalue.type;
+  };
+
+  AST.Expr.RvalueExpr.prototype.evaluate = function(context) {
+    return this.rvalue.evaluate(context);
   };
 
   AST.Expr.BinaryExpr = function BinaryExpr(operand1, operator, operand2) {
@@ -427,16 +444,21 @@
   };
 
   AST.Expr.Factor.FunctionCall.prototype.evaluate = function(context) {
-    var returnValue, params;
+    var returnValue, params, args;
     context.pushFrame(this.id.decl);
-    for (params = this.params; params; params = params.exprs) {
-      context.stack.push(params.expr.evalute(context));
+    for (params = this.params, args = this.id.decl.args; params && args; params = params.exprs, args = args.args) {
+      context.setValue(args.arg, params.expr.evaluate(context));
     }
-    this.id.decl.execute(context);
+    this.id.decl.stmts.execute(context);
     //TODO: IF VOID, DON'T POP
-    //if (!this.id.decl.type.is(Token.Type.VOID)) {
+    if (!this.id.is(Token.Type.FunctionType[Token.Type.VOID])) {
       returnValue = context.getReturn();
-    //}
+      if (returnValue === undefined) {
+        returnValue = 0;
+        //throw new NewRuntimeError('Function "' + this.id.value + '" should return.');
+      }
+    }
+    context.setReturn();
     for (params = this.params; params; params = params.exprs) {
       context.stack.pop();
     }
