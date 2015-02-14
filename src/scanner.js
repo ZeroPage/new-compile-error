@@ -93,6 +93,25 @@
     return char;
   };
 
+  CharScanner.prototype.pushback = function(length) {
+    if (length === 0) {
+      return;
+    }
+
+    if (length > 1) {
+      throw new Error("cannot pushback two or more characters");
+    }
+
+    if (this.position.column - length < 0) {
+      throw new Error("cannot pushback to previous line");
+    }
+
+    this.position.column--;
+
+    this.buffer.unshift(this.consumed.pop());
+    this.char = this.buffer[0];
+  };
+
   CharScanner.prototype.isAlpha = function() {
     return (this.char >= 'a' && this.char <= 'z') ||
            (this.char >= 'A' && this.char <= 'Z');
@@ -171,7 +190,7 @@
             selectedBuffer = buffer;
           }
         }
-//        charScanner.pushback(buffer.length - selectedBuffer.length);
+        charScanner.pushback(buffer.length - selectedBuffer.length);
         token = selectedToken;
       }
 

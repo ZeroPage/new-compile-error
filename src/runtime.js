@@ -48,11 +48,18 @@
     return this.returnValue;
   };
 
-  RuntimeContext.prototype.pushFrame = function(decl) {
+  RuntimeContext.prototype.pushFrame = function(decl, node, callback) {
+    var frameBase;
     this.decl = decl;
     this.stack.push(this.frameBase);
-    this.frameBase = this.stack.top;
-    this.stack.top += this.decl.$symbolSize;
+    frameBase = this.stack.top;
+
+    if (callback) {
+      callback.call(node, this);
+    }
+
+    this.frameBase = frameBase;
+    this.stack.top = this.frameBase + this.decl.$symbolSize;
   };
 
   RuntimeContext.prototype.popFrame = function() {

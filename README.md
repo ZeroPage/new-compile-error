@@ -9,7 +9,7 @@ http://wiki.zeropage.org/wiki.php/NewCompileError
 ```
 Program ::= DeclList ?
 DeclList ::= ( VarDecl | FunctionDecl ) DeclList ?
-FunctionDecl ::= Type identifier "(" ArgList ")" CompoundStmt
+FunctionDecl ::= Type identifier "(" ArgList ? ")" CompoundStmt
 ArgList ::= Arg ( "," ArgList ) ?
 Arg ::= Type identifier
 VarDecl ::= Type IdentList ";"

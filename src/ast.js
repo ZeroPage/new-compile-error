@@ -158,7 +158,7 @@
   };
 
   AST.IdentList.prototype.execute = function(context) {
-    context.setValue(this.id, this.type.cast(this.expr ? this.expr.evaluate(context) : 0));
+    context.setValue(this, this.type.cast(this.expr ? this.expr.evaluate(context) : 0));
     if (this.idList) this.idList.execute(context);
   };
 
@@ -178,6 +178,14 @@
   };
 
   AST.Stmt.ForStmt.prototype = new AST.Stmt();
+
+  AST.Stmt.ForStmt.prototype.execute = function(context) {
+    if (this.initExpr) this.initExpr.evaluate(context);
+    while (this.condExpr.evaluate(context)) {
+      this.stmt.execute(context);
+      this.incrExpr.evaluate(context);
+    }
+  };
 
   AST.Stmt.WhileStmt = function WhileStmt(condExpr, stmt) {
     AST.Stmt.apply(this, arguments);
@@ -228,7 +236,7 @@
   };
 
   AST.Stmt.ReturnStmt.prototype.execute = function(context) {
-    context.setReturn(this.expr.evaluate());
+    context.setReturn(this.expr.evaluate(context));
   };
 
   AST.Stmt.ExprStmt = function ExprStmt(expr) {
@@ -440,15 +448,17 @@
   AST.Expr.Factor.FunctionCall.prototype.accept = function() {
     AST.Expr.Factor.prototype.accept.apply(this, arguments);
 
-    return this.id.decl.args.assertAssignableFrom(this.params);
+    return (!this.id.decl.args && !this.params) || this.id.decl.args.assertAssignableFrom(this.params);
   };
 
   AST.Expr.Factor.FunctionCall.prototype.evaluate = function(context) {
     var returnValue, params, args;
-    context.pushFrame(this.id.decl);
-    for (params = this.params, args = this.id.decl.args; params && args; params = params.exprs, args = args.args) {
-      context.setValue(args.arg, params.expr.evaluate(context));
-    }
+    context.pushFrame(this.id.decl, this, function(context) {
+      for (params = this.params, args = this.id.decl.args; params && args; params = params.exprs, args = args.args) {
+        //context.setValue(args.arg, params.expr.evaluate(context));
+        context.stack.push(args.arg.type.cast(params.expr.evaluate(context)));
+      }
+    });
     this.id.decl.stmts.execute(context);
     //TODO: IF VOID, DON'T POP
     if (!this.id.is(Token.Type.FunctionType[Token.Type.VOID])) {
@@ -459,9 +469,6 @@
       }
     }
     context.setReturn();
-    for (params = this.params; params; params = params.exprs) {
-      context.stack.pop();
-    }
     context.popFrame();
     return returnValue;
   };

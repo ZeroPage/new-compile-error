@@ -71,7 +71,9 @@
     type = this.takeIt(Token.Type);
     id = this.takeIt(Token.Identifier);
     this.takeIt(Token.LPAREN);
-    args = this.takeArgList();
+    if (!this.nextTokenIs(Token.RPAREN)) {
+      args = this.takeArgList();
+    }
     this.takeIt(Token.RPAREN);
     stmts = this.takeCompoundStmt();
     return new AST.FunctionDecl(type, id, args, stmts);

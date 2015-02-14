@@ -18,7 +18,8 @@
         Token.Type.INT,
         new Token.Identifier('i')
       )
-    )
+    ),
+    new AST.Stmt.CompoundStmt()
   );
   // int putFloat(float f)
   API.putFloat = new AST.FunctionDecl(
@@ -29,22 +30,37 @@
         Token.Type.FLOAT,
         new Token.Identifier('f')
       )
-    )
+    ),
+    new AST.Stmt.CompoundStmt()
+  );
+
+  API.getInt = new AST.FunctionDecl(
+    Token.Type.INT,
+    new Token.Identifier('getInt'),
+    null,
+    new AST.Stmt.CompoundStmt()
   );
 
   // stdio.c
   API.putIntBody = {
     'execute': function(context) {
       var value = context.getValue(API.putInt.args.arg);
-      console.log(value);
+      document.getElementById('stdout').value += value + '\n';
       context.setReturn(String(value).length);
     }
   };
   API.putFloatBody = {
     'execute': function(context) {
       var value = context.getValue(API.putFloat.args.arg);
-      console.log(value);
+      document.getElementById('stdout').value += value + '\n';
       context.setReturn(String(value).length);
+    }
+  };
+
+  API.getIntBody = {
+    'execute': function(context) {
+      var token = new Token.Number.Integer(window.prompt());
+      context.setReturn(token.evaluate(context));
     }
   };
 

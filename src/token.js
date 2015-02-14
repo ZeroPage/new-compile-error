@@ -136,10 +136,14 @@
   Token.Operator = function Operator(buffer, operate) {
     Token.apply(this, arguments);
 
-    this.operate = operate;
+    this._operate = operate;
   };
 
   Token.Operator.prototype = new Token();
+
+  Token.Operator.prototype.operate = function() {
+    return this._operate.apply(this, arguments);
+  };
 
   Token.Operator.AddSub = {};
   Token.Operator.MulDiv = {};
@@ -149,11 +153,17 @@
       (this.value === '*' || this.value === '/') && Token.Operator.MulDiv;
   };
 
-  Token.Operator.Compare = function CompareOperator(buffer, operate) {
-    Token.Operator.apply(this, arguments);
+  Token.Operator.Compare = function CompareOperator(buffer, compare) {
+    Token.Operator.apply(this, [arguments[0]]);
+
+    this._compare = compare;
   };
 
   Token.Operator.Compare.prototype = new Token.Operator();
+
+  Token.Operator.Compare.prototype.operate = function() {
+    return this._compare.apply(this, arguments) ? 1 : 0;
+  };
 
   Token.Number = function NumberToken(buffer) {
     var number = Number(buffer);
