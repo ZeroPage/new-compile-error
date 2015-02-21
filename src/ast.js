@@ -196,6 +196,12 @@
 
   AST.Stmt.WhileStmt.prototype = new AST.Stmt();
 
+  AST.Stmt.WhileStmt.prototype.execute = function(context) {
+    while (this.condExpr.evaluate(context)) {
+      this.stmt.execute(context);
+    }
+  };
+
   AST.Stmt.IfStmt = function IfStmt(condExpr, ifStmt, elseStmt) {
     AST.Stmt.apply(this, arguments);
 
@@ -205,6 +211,14 @@
   };
 
   AST.Stmt.IfStmt.prototype = new AST.Stmt();
+
+  AST.Stmt.IfStmt.prototype.execute = function(context) {
+    if (this.condExpr.evaluate(context)) {
+      this.ifStmt.execute(context);
+    } else if (this.elseStmt) {
+      this.elseStmt.execute(context);
+    }
+  };
 
   AST.Stmt.CompoundStmt = function CompoundStmt(decls, stmts) {
     AST.Stmt.apply(this, arguments);
@@ -296,7 +310,9 @@
   };
 
   AST.Expr.AssignExpr.prototype.evaluate = function(context) {
-    return context.setValue(this.id.decl, this.id.type.cast(this.expr.evaluate(context)));
+    var value = this.id.type.cast(this.expr.evaluate(context));
+    context.setValue(this.id.decl, value);
+    return value;
   };
 
   AST.Expr.RvalueExpr = function RvalueExpr(rvalue) {

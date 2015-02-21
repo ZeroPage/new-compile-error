@@ -38,6 +38,7 @@
 
   RuntimeContext.prototype.setValue = function(decl, value) {
     this.stack.set(this.frameBase + decl.$index, value);
+    return value;
   };
 
   RuntimeContext.prototype.setReturn = function(value) {
