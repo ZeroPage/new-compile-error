@@ -12,17 +12,8 @@
     var ast, parser;
 
     parser = new LLParser(tokens);
-    try {
-      ast = parser.takeProgram();
-      parser.takeIt(Token.EOF);
-    } catch (e) {
-      if (e instanceof NewSyntaxError) {
-        console.error(e.message, e.actual, e.expected);
-        console.error(e.toString());
-      } else {
-        console.error(e);
-      }
-    }
+    ast = parser.takeProgram();
+    parser.takeIt(Token.EOF);
 
     return ast;
   };

@@ -77,15 +77,6 @@
   };
 
   exports.Runtime = function Runtime(ast) {
-    try {
-      ast.execute(new RuntimeContext());
-    } catch (e) {
-      if (e instanceof NewRuntimeError) {
-        console.error(e.message);
-        console.error(e.toString());
-      } else {
-        console.error(e);
-      }
-    }
+    ast.execute(new RuntimeContext());
   };
 })((module || {exports: {}}).exports);

@@ -1,19 +1,35 @@
 (function() {
   "use strict";
 
-  var tokens, ast, semantic;
+  var tokens, ast, semantic, error;
 
-  tokens = require('./src/scanner').Scanner();
+  error = require('./src/error');
 
-  console.log("Tokens: ", tokens);
+  try {
 
-  ast = require('./src/parser').Parser(tokens.slice());
+    tokens = require('./src/scanner').Scanner();
 
-  console.log("AST: ", ast);
+    console.log("Tokens: ", tokens);
 
-  require('./src/semantic').Analyzer(ast);
+    ast = require('./src/parser').Parser(tokens.slice());
 
-  require('./src/linker').Linker(ast);
+    console.log("AST: ", ast);
 
-  require('./src/runtime').Runtime(ast);
+    require('./src/semantic').Analyzer(ast);
+
+    require('./src/linker').Linker(ast);
+
+    require('./src/runtime').Runtime(ast);
+
+  } catch (e) {
+    if (e instanceof error.NewSyntaxError) {
+      console.error(e.message, e.actual, e.expected);
+      console.error(e.toString());
+    } else if (e instanceof error.NewRuntimeError) {
+      console.error(e.message);
+      console.error(e.toString());
+    } else {
+      console.error(e);
+    }
+  }
 })();
