@@ -122,6 +122,10 @@
     return this.char >= '0' && this.char <= '9';
   };
 
+  CharScanner.prototype.isPoint = function() {
+    return this.char === '.';
+  };
+
   CharScanner.prototype.isIdentifierStartChar = function() {
     return this.isAlpha() || this.char === '_';
   };
@@ -138,12 +142,16 @@
     return this.char === '"';
   };
 
+  CharScanner.prototype.isEscape = function() {
+    return this.char === '\\';
+  };
+
   CharScanner.prototype.isEOL = function() {
     return this.char === '\n';
   };
 
   Scanner = function Scanner() {
-    var char, buffer, token, charScanner, selectedToken, selectedBuffer, scripts, obj, tokens;
+    var char, buffer, token, charScanner, selectedToken, selectedBuffer, scripts, obj, tokens, toEscape;
 
     scripts = getScripts('text/minic');
 
@@ -164,7 +172,7 @@
         }
         
         token = Token.WORD(buffer);
-      // NUMBER_INT
+      // NUMBER_INT || NUMBER_FLOAT
       } else if (charScanner.isDigit()) {
         buffer += charScanner.readChar();
 
@@ -172,7 +180,16 @@
           buffer += charScanner.readChar();
         }
 
-        token = new Token.Number.Integer(buffer);
+        if (charScanner.nextChar() && charScanner.isPoint()) {
+          buffer += charScanner.readChar();
+
+          while (charScanner.nextChar() && charScanner.isDigit()) {
+            buffer += charScanner.readChar();
+          }
+          token = new Token.Number.Float(buffer);
+        } else {
+          token = new Token.Number.Integer(buffer);
+        }
       } else if (charScanner.isWhitespace()) {
         charScanner.readChar();
         while (charScanner.nextChar() && charScanner.isWhitespace()) {
@@ -185,7 +202,18 @@
         while (charScanner.nextChar() &&
             !charScanner.isEOL() &&
             !charScanner.isDquote()) {
-          buffer += charScanner.readChar();
+          if (charScanner.isEscape()) {
+            charScanner.readChar();
+            if (charScanner.nextChar()) {
+              toEscape = charScanner.readChar();
+              buffer += toEscape
+                .replace('\n', '')
+                .replace('n', '\n')
+                .replace('t', '\t');
+            }
+          } else {
+            buffer += charScanner.readChar();
+          }
         }
         token = new Token.String(buffer);
         if (!charScanner.isDquote()) {

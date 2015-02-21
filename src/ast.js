@@ -3,6 +3,10 @@
 
   var Token, NewSyntaxError, NewRuntimeError, AST = function AST() {
     this.arguments = arguments;
+
+    if (arguments[0] instanceof Token || arguments[0] instanceof AST) {
+      this.position = arguments[0].position;
+    }
   };
   
   Token = require('./token').Token;
@@ -116,7 +120,7 @@
 
   AST.Arg.prototype.assertAssignableFrom = function(expr) {
     if (!this.type.isAssignableFrom(expr.type)) {
-      throw new NewSyntaxError('function parameter type not matched', expr.type, this.type);
+      throw new NewSyntaxError('function parameter type not matched', expr, this.type);
     }
     return true;
   };
