@@ -10,6 +10,7 @@
     } else {
       this.value = token;
     }
+    this.tokenType = this;
   };
 
   Token.prototype.accept = function(visitor) {
@@ -54,12 +55,14 @@
 
   Type.prototype = new Token();
 
+  Type.prototype.is = function(tokenType) {
+    return Token.prototype.is.apply(this, arguments) ||
+      tokenType instanceof Type && this.value === tokenType.value;
+  };
+
   Type.prototype.isAssignableFrom = function(type) {
-    return (this === type) || type.isPrototypeOf(this) || this.isPrototypeOf(type) || Object.getPrototypeOf(this) === Object.getPrototypeOf(type) ||
-      (
-        (this === Token.Type.FLOAT || Token.Type.FLOAT.isPrototypeOf(this)) &&
-        (type === Token.Type.INT || Token.Type.INT.isPrototypeOf(type))
-      );
+    return this.is(type) ||
+      (this.is(Token.Type.FLOAT) && type.is(Token.Type.INT));
   };
 
   Type.prototype.getTokenType = function() {
@@ -83,11 +86,13 @@
   Token.Type = {};
   Token.Type.INT = new Type('int', parseInt);
   Token.Type.FLOAT = new Type('float', parseFloat);
+  Token.Type.STRING = new Type('string', String);
   Token.Type.VOID = new Type('void');
 
   Token.Type.FunctionType = {};
   Token.Type.FunctionType[Token.Type.INT] = new Type.FunctionType(Token.Type.INT);
   Token.Type.FunctionType[Token.Type.FLOAT] = new Type.FunctionType(Token.Type.FLOAT);
+  Token.Type.FunctionType[Token.Type.STRING] = new Type.FunctionType(Token.Type.STRING);
   Token.Type.FunctionType[Token.Type.VOID] = new Type.FunctionType(Token.Type.VOID);
 
   Token.SEMICOLON = new Token(';');
@@ -100,6 +105,8 @@
   Token.LBRACKET = new Token('[');
   Token.RBRACKET = new Token(']');
   Token.ASSIGN = new Token('=');
+
+  Token.DQUOTE = new Token('"');
 
   Token.EOF = function EOF() {
     Token.apply(this, arguments);
@@ -163,6 +170,19 @@
 
   Token.Operator.Compare.prototype.operate = function() {
     return this._compare.apply(this, arguments) ? 1 : 0;
+  };
+
+  Token.String = function StringToken(buffer) {
+    var string = String(buffer);
+    Token.apply(this, arguments);
+
+    this.type = Token.Type.STRING;
+  };
+
+  Token.String.prototype = new Token();
+
+  Token.String.prototype.evaluate = function(context) {
+    return String(this.value);
   };
 
   Token.Number = function NumberToken(buffer) {
@@ -251,7 +271,8 @@
     '{': {__TOKEN__: Token.LBRACE},
     '}': {__TOKEN__: Token.RBRACE},
     '[': {__TOKEN__: Token.LBRACKET},
-    ']': {__TOKEN__: Token.RBRACKET}
+    ']': {__TOKEN__: Token.RBRACKET},
+    '"': {__TOKEN__: Token.DQUOTE}
   };
 
   Token.SYMBOL_OBJ = function SYMBOL_OBJ(buffer) {
@@ -277,6 +298,7 @@
   WORD_DICTIONARY = {
     'int': Token.Type.INT,
     'float': Token.Type.FLOAT,
+    'string': Token.Type.STRING,
     'for': Token.Keyword.FOR,
     'while': Token.Keyword.WHILE,
     'if': Token.Keyword.IF,

@@ -1,9 +1,10 @@
 (function(exports) {
   'use strict';
 
-  var Scanner, CharScanner, Token, Position;
+  var Scanner, CharScanner, Token, Position, NewSyntaxError;
 
   Token = require('./token').Token;
+  NewSyntaxError = require('./error').NewSyntaxError;
 
   Position = function Position(source) {
     Token.Position.apply(this, [1, 1, source]);
@@ -133,6 +134,10 @@
     return this.char === ' ' || this.char === '\t' || this.char === '\n' || this.char === '\r';
   };
 
+  CharScanner.prototype.isDquote = function() {
+    return this.char === '"';
+  };
+
   CharScanner.prototype.isEOL = function() {
     return this.char === '\n';
   };
@@ -150,7 +155,7 @@
       buffer = '';
       var position = charScanner.position.current();
 
-      // IDENTIFIER || TYPE_INT || TYPE_FLOAT || KEYWORD
+      // IDENTIFIER || TYPE_INT || TYPE_FLOAT || TYPE_STRING || KEYWORD
       if (charScanner.isIdentifierStartChar()) {
         buffer += charScanner.readChar();
 
@@ -174,6 +179,19 @@
           charScanner.readChar();
         }
         token = null;
+      // STRING
+      } else if (charScanner.isDquote()) {
+        charScanner.readChar();
+        while (charScanner.nextChar() &&
+            !charScanner.isEOL() &&
+            !charScanner.isDquote()) {
+          buffer += charScanner.readChar();
+        }
+        token = new Token.String(buffer);
+        if (!charScanner.isDquote()) {
+          throw new NewSyntaxError("missing character \"", token);
+        }
+        charScanner.readChar();
       // SYMBOL
       } else {
         buffer += charScanner.readChar();

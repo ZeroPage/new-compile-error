@@ -33,10 +33,36 @@
     ),
     new AST.Stmt.CompoundStmt()
   );
+  // int puts(string s)
+  API.puts = new AST.FunctionDecl(
+    Token.Type.INT,
+    new Token.Identifier('puts'),
+    new AST.ArgList(
+      new AST.Arg(
+        Token.Type.STRING,
+        new Token.Identifier('s')
+      )
+    ),
+    new AST.Stmt.CompoundStmt()
+  );
 
   API.getInt = new AST.FunctionDecl(
     Token.Type.INT,
     new Token.Identifier('getInt'),
+    null,
+    new AST.Stmt.CompoundStmt()
+  );
+
+  API.getFloat = new AST.FunctionDecl(
+    Token.Type.FLOAT,
+    new Token.Identifier('getFloat'),
+    null,
+    new AST.Stmt.CompoundStmt()
+  );
+
+  API.gets = new AST.FunctionDecl(
+    Token.Type.STRING,
+    new Token.Identifier('gets'),
     null,
     new AST.Stmt.CompoundStmt()
   );
@@ -56,10 +82,31 @@
       context.setReturn(String(value).length);
     }
   };
+  API.putsBody = {
+    'execute': function(context) {
+      var value = context.getValue(API.puts.args.arg);
+      document.getElementById('stdout').value += value;
+      context.setReturn(String(value).length);
+    }
+  };
 
   API.getIntBody = {
     'execute': function(context) {
       var token = new Token.Number.Integer(window.prompt());
+      context.setReturn(token.evaluate(context));
+    }
+  };
+
+  API.getFloatBody = {
+    'execute': function(context) {
+      var token = new Token.Number.Float(window.prompt());
+      context.setReturn(token.evaluate(context));
+    }
+  };
+
+  API.getsBody = {
+    'execute': function(context) {
+      var token = new Token.String(window.prompt());
       context.setReturn(token.evaluate(context));
     }
   };

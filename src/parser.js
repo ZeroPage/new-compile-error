@@ -264,7 +264,7 @@
   }; 
 
   LLParser.prototype.takeFactor = function() {
-    var expr, operator, factor, id, params, number;
+    var expr, operator, factor, id, params, number, string;
     if (this.nextTokenIs(Token.LPAREN)) {
       this.takeIt();
       expr = this.takeExpr();
@@ -288,6 +288,9 @@
     } else if (this.nextTokenIs(Token.Number)) {
       number = this.takeIt();
       return new AST.Expr.Factor(number);
+    } else if (this.nextTokenIs(Token.String)) {
+      string = this.takeIt();
+      return new AST.Expr.Factor(string);
     } else {
       throw new NewSyntaxError('Unexpected token: ', this.takeIt());
     }

@@ -51,5 +51,6 @@ Factor ::= "(" Expr ")"
          | identifier "(" ExprList ? ")"
          | identifier
          | number
+         | string
 ExprList ::= Expr ( "," ExprList ) ?
 ```

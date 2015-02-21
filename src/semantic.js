@@ -108,7 +108,10 @@
 
     API.putInt.accept(visitor);
     API.putFloat.accept(visitor);
+    API.puts.accept(visitor);
     API.getInt.accept(visitor);
+    API.getFloat.accept(visitor);
+    API.gets.accept(visitor);
 
     StdEnvironment.putInt = {
       type: Token.Type.INT,
@@ -116,13 +119,28 @@
     };
 
     StdEnvironment.putFloat = {
-      type: Token.Type.FLOAT,
+      type: Token.Type.INT,
       node: API.putFloat
+    };
+
+    StdEnvironment.puts = {
+      type: Token.Type.INT,
+      node: API.puts
     };
 
     StdEnvironment.getInt = {
       type: Token.Type.INT,
       node: API.getInt
+    };
+
+    StdEnvironment.getFloat = {
+      type: Token.Type.FLOAT,
+      node: API.getFloat
+    };
+
+    StdEnvironment.gets = {
+      type: Token.Type.STRING,
+      node: API.gets
     };
 
     try {

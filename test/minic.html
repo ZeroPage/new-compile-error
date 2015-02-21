@@ -5,20 +5,14 @@
   </head>
   <body>
     <script type="text/minic">
+      string concat(string a, string b) {
+        return a + b;
+      }
       int add(int a, int b) {
         return a + b;
       }
       int main() {
-        int argv = getInt(), i = 0, j = 0;
-        for (i=0; i<argv;i=i+1) {
-          putInt(i/2);
-          if (i>argv/2)
-            while ((j=j+1) < i)
-              putInt(j);
-          else {
-            putInt(add(-i, argv));
-          }
-        }
+        puts(concat("Hello, ", gets()));
       }
     </script>
 
