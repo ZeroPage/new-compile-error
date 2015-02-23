@@ -142,6 +142,10 @@
     return this.char === '"';
   };
 
+  CharScanner.prototype.isSlash = function() {
+    return this.char === '/';
+  };
+
   CharScanner.prototype.isEscape = function() {
     return this.char === '\\';
   };
@@ -223,6 +227,13 @@
       // SYMBOL
       } else {
         buffer += charScanner.readChar();
+        // SINGLE LINE COMMENT
+        if (buffer[buffer.length-1] === '/' && charScanner.isSlash()) {
+          buffer = buffer.slice(0, -1);
+          while (!charScanner.isEOL()) {
+            charScanner.readChar();
+          }
+        }
         obj = Token.SYMBOL_OBJ(buffer);
         selectedToken = token = Token.SYMBOL(buffer);
         selectedBuffer = buffer;
